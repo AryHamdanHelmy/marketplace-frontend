@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+    --color-hitam: #121421;
+    --color-putih: #FFFFFF;
+    --color-description: #919CC9;
+}
+
+@layer utilities {
+    .scrollbar-Hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-Hide::-webkit-scrollbar {
+        display: none;
+    }
+}
