@@ -1,4 +1,4 @@
-import react from "react";
+import React from "react";
 import Card from "./Card";
 import productivityImage from "../assets/prod.png";
 import marketingImage from "../assets/market.png";
@@ -40,7 +40,7 @@ export default function Categories() {
             <h1 className="text-putih text-2xl">
                 Categories
             </h1>
-            <div className="flex overflow-x-auto gap-4 py-5 scrollbar-Hide ">
+            <div className="flex overflow-x-auto gap-4 py-5 scrollbar-hide ">
                 {categories.map((cat) => (
                     <div key={cat.title} className="min-w-[160px] flex-srink-0">
                         <Card

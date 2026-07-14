@@ -8,7 +8,7 @@ export default function Hero() {
                 backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${backgroundImage})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-            }} className="w-80 h-100 px-8 py-40 md:w-232 md:h-120 rounded-2xl">
+            }} className="w-auto h-100 px-8 py-40 md:w-232 md:h-120 rounded-2xl">
             <h1 className="text-2xl font-extrabold text-putih leading-tight md:text-4xl md:max-w-3xl md:mx-auto">
                 Discover the Future of Work with AI
             </h1>

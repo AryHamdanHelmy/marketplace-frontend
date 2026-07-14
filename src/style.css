@@ -7,12 +7,12 @@
 }
 
 @layer utilities {
-    .scrollbar-Hide {
+    .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
 
-    .scrollbar-Hide::-webkit-scrollbar {
+    .scrollbar-hide::-webkit-scrollbar {
         display: none;
     }
 }
