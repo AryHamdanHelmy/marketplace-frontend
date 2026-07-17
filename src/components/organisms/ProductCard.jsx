@@ -12,7 +12,7 @@ export default function ProductCard({ product, onClick }) {
       onClick={onClick}
       className="flex flex-col gap-2 cursor-pointer group"
     >
-      <div className="rounded-2xl overflow-hidden aspect-square w-full bg-white/5">
+      <div className="rounded-2xl overflow-hidden aspect-square w-full bg-black/5">
         {thumbnail ? (
           <img
             src={thumbnail}
@@ -28,11 +28,11 @@ export default function ProductCard({ product, onClick }) {
 
       <div className="px-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-bold text-white text-sm md:text-base truncate">
+          <h3 className="font-bold text-black text-sm md:text-base truncate">
             {title}
           </h3>
           {rating_label && (
-            <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full bg-pastel-blue text-indigo-300">
+            <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full bg-pastel-blue text-pastel-green">
               {rating_label}
             </span>
           )}
@@ -46,7 +46,7 @@ export default function ProductCard({ product, onClick }) {
           {description}
         </p>
 
-        <p className="text-sm font-semibold text-white mt-1.5">
+        <p className="text-sm font-semibold text-black mt-1.5">
           {formattedPrice}
         </p>
       </div>

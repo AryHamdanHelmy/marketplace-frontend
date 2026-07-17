@@ -40,8 +40,6 @@ export function AuthProvider({ children }) {
     logout,
     getToken,
   };
-  console.log("AUTHCONTEXT VALUE:", value);
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

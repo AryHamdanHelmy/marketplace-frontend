@@ -1,45 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import { useFetch } from "../hooks/useFetch";
 
 const PER_PAGE = 10;
 
 export default function Users() {
-    const [users, setUsers] = useState([]);
-    const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
 
-    useEffect(() => {
-        let ignore = false;
-        async function fetchUsers() {
-            try {
-                setLoading(true);
-                setError(null);
-                const res = await apiRequest(`/users?page=${page}&per_page=${PER_PAGE}`);
-                if (!ignore) {
-                    setUsers(res.data || []);
-                    setMeta(res.meta || null);
-                }
-            } catch (err) {
-                if (!ignore) {
-                    setError(err.message || "Terjadi kesalahan saat memuat data");
-                }
-            } finally {
-                if (!ignore) {
-                    setLoading(false);
-                }
-            }
-        }
+    const { data, loading, error, setData } = useFetch(
+        `/users?page=${page}&per_page=${PER_PAGE}`,
+        [page]
+    );
 
-        fetchUsers();
-
-        return () => {
-            ignore = true;
-        };
-    }, [page]);
+    // Ambil users & meta dari response, dengan fallback aman kalau data belum ada
+    const users = data?.data || [];
+    const meta = data?.meta || null;
 
     const goToPage = (newPage) => {
         if (newPage < 1) return;
@@ -55,7 +32,11 @@ export default function Users() {
         setDeletingId(userId);
         try {
             await apiRequest(`/users/${userId}`, { method: "DELETE" });
-            setUsers((prev) => prev.filter((u) => u.id !== userId));
+            // Update data lokal lewat setData dari useFetch, tanpa perlu refetch ke server
+            setData((prev) => ({
+                ...prev,
+                data: prev.data.filter((u) => u.id !== userId),
+            }));
         } catch (err) {
             alert(err.message || "Failed to delete user");
         } finally {
@@ -67,7 +48,10 @@ export default function Users() {
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-2xl font-semibold mb-6">User List</h1>
 
-                {loading && <p className="text-gray-400">Load user data...</p>}
+                {/* Loading text cuma muncul pas belum ada data sama sekali (first load) */}
+                {loading && users.length === 0 && (
+                    <p className="text-gray-400">Load user data...</p>
+                )}
 
                 {!loading && error && (
                     <p className="text-red-400">Error: {error}</p>
@@ -77,9 +61,15 @@ export default function Users() {
                     <p className="text-gray-400">No users found.</p>
                 )}
 
-                {!loading && !error && users.length > 0 && (
+                {/* Tabel tetap tampil selama ada data, gak peduli status loading -
+                    biar pas ganti halaman gak ngilang total & bikin layout collapse */}
+                {users.length > 0 && (
                     <>
-                        <div className="overflow-x-auto bg-white rounded-lg border-2 border-black/50">
+                        <div
+                            className={`overflow-x-auto bg-white rounded-lg border-2 border-black/50 transition-opacity ${
+                                loading ? "opacity-50 pointer-events-none" : "opacity-100"
+                            }`}
+                        >
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-darkblue/90">
                                     <tr>
@@ -134,17 +124,17 @@ export default function Users() {
                                 <div className="flex items-center justify-center gap-2 flex-wrap">
                                     <button
                                         onClick={() => goToPage(meta.current_page - 1)}
-                                        disabled={meta.current_page <= 1}
+                                        disabled={meta.current_page <= 1 || loading}
                                         className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                     >
                                         ← Prev
                                     </button>
 
-                                    <PageNumbers meta={meta} onGoToPage={goToPage} />
+                                    <PageNumbers meta={meta} onGoToPage={goToPage} disabled={loading} />
 
                                     <button
                                         onClick={() => goToPage(meta.current_page + 1)}
-                                        disabled={meta.current_page >= meta.last_page}
+                                        disabled={meta.current_page >= meta.last_page || loading}
                                         className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                     >
                                         Next →
@@ -159,7 +149,7 @@ export default function Users() {
     );
 }
 
-function PageNumbers({ meta, onGoToPage }) {
+function PageNumbers({ meta, onGoToPage, disabled }) {
     const { current_page, last_page } = meta;
 
     // Tampilkan maksimal 5 nomor halaman di sekitar halaman aktif
@@ -175,9 +165,10 @@ function PageNumbers({ meta, onGoToPage }) {
                 <button
                     key={p}
                     onClick={() => onGoToPage(p)}
-                    className={`w-8 h-8 rounded-lg text-sm transition ${
+                    disabled={disabled}
+                    className={`w-8 h-8 rounded-lg text-sm transition disabled:opacity-40 disabled:cursor-not-allowed ${
                         p === current_page
-                            ? "bg-pastelblue text-white"
+                            ? "bg-pastel-blue text-white"
                             : "bg-black/5 border border-black/10 hover:bg-black/10 text-black"
                     }`}
                 >

@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import logoImage from "../assets/logo.png";
 import { Link } from "react-router-dom";
 import LogoutButton from "./LogoutButton";
@@ -16,11 +15,16 @@ export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const { isLoggedIn, isAdmin, user } = useAuth();
-    console.log("DEBUG:", { isLoggedIn, isAdmin, user });
     const location = useLocation();
     const navigate = useNavigate();
     const isMovePage = ["/login", "/register"].includes(location.pathname);
     const isAdminPage = location.pathname.startsWith("/users");
+
+    // Tutup menu mobile tiap kali pindah halaman - mencegah state "kebuka"
+    // nyangkut dari halaman sebelumnya (Navbar gak pernah unmount antar-route)
+    useEffect(() => {
+        setMenuOpen(false);
+    }, [location.pathname]);
 
     // Jangan render Navbar sama sekali di halaman login/register biar tampilan clean
     if (isMovePage) return null;
@@ -36,8 +40,10 @@ export default function Navbar() {
     return (
         <header className="w-full fixed px-5 py-3 md:px-25 md:py-2 bg-darkblue/90 border-b border-darkblue top-0 z-50 backdrop-blur-3xl">
             <div className="flex items-center justify-between gap-3">
-                <Link to="/" className="text-xl font-bold text-white shrink-0">DibiTech</Link>
-
+                <Link 
+                    to="/" 
+                    onClick={()=> setMenuOpen(false)}
+                    className="text-xl font-bold text-white shrink-0">DibiTech</Link>
                 {/* Search bar - desktop */}
                 <form onSubmit={handleSearchSubmit} className="hidden md:block flex-1 max-w-xs">
                     <InputGroup>
@@ -93,9 +99,8 @@ export default function Navbar() {
                             <li>
                                 <Link
                                     to="/users"
-                                    className={`hover:text-pastel-blue cursor-pointer transition ${
-                                        isAdminPage ? "text-indigo-400 font-semibold" : ""
-                                    }`}
+                                    className={`hover:text-pastel-blue cursor-pointer transition ${isAdminPage ? "text-pastel-green font-semibold" : ""
+                                        }`}
                                 >
                                     Manage Users
                                 </Link>
@@ -163,7 +168,7 @@ export default function Navbar() {
             {/* Mobile dropdown menu */}
             {!isMovePage && menuOpen && (
                 <nav className="md:hidden absolute top-full right-2 w-50 bg-darkblue/90 backdrop-blur-3xl rounded-xl pb-2 pt-4 mt-2 flex flex-col gap-4 items-center">
-                    <ul className="flex flex-col gap-3 text-pastelgreen text-center font-medium text-sm">
+                    <ul className="flex flex-col gap-3 text-pastel-green text-center font-medium text-sm">
                         {!isAdminPage && (
                             <>
                                 <li className="hover:text-pastel-blue cursor-pointer transition">Category</li>
@@ -175,19 +180,25 @@ export default function Navbar() {
                                 <Link
                                     to="/users"
                                     onClick={() => setMenuOpen(false)}
-                                    className={`hover:text-pastel-blue cursor-pointer transition ${
-                                        isAdminPage ? "text-pastel-blue font-semibold" : ""
-                                    }`}
+                                    className={`hover:text-pastel-blue cursor-pointer transition ${isAdminPage ? "text-pastel-green font-semibold" : ""
+                                        }`}
                                 >
                                     Manage Users
                                 </Link>
                             </li>
                         )}
+                        <li>
+                            <Link to="/explore"
+                                onClick={()=>setMenuOpen(false)}
+                                className="hover:text-sky-600 transition">
+                                Explore Products
+                            </Link>
+                        </li>
                     </ul>
                     {isLoggedIn ? (
                         <div className="flex flex-col items-center gap-2 w-full px-4">
-                            <p className="text-putih text-sm">Hi, {user.name}</p>
-                            <LogoutButton className="w-full text-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-pastel-blue hover:bg-pastel-cyan transition" />
+                            <p className="text-white text-sm">Hi, {user.name}</p>
+                            <LogoutButton onClick={()=>setMenuOpen(false)} className="w-full text-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-pastel-blue hover:bg-pastel-cyan transition" />
                         </div>
                     ) : (
                         <Link to="/login" className="text-white px-5 py-2 text-center transition font-medium text-sm hover:scale-105">
