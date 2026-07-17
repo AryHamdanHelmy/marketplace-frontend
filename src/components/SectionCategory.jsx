@@ -36,13 +36,13 @@ const categories = [{
 
 export default function Categories() {
     return (
-        <div className="px-5 py-5 md md:w-auto md:px-40">
-            <h1 className="text-putih text-2xl">
+        <div className="px-5 py-5 md:w-auto md:px-40">
+            <h1 className="text-darkblue font-bold text-2xl">
                 Categories
             </h1>
             <div className="flex overflow-x-auto gap-4 py-5 scrollbar-hide ">
                 {categories.map((cat) => (
-                    <div key={cat.title} className="min-w-[160px] flex-srink-0">
+                    <div key={cat.title} className="min-w-[100px] flex-srink-0">
                         <Card
                             title={cat.title}
                             description={cat.description}

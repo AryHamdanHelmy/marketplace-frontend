@@ -8,10 +8,11 @@ import Featured from "./components/SectionFeature";
 import FeaturedImage from "./assets/trand.png";
 import Tranding from "./components/SectionTranding";
 import Footer from "./components/Footer";
-import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import Users from "./pages/Users";
 import UserDetails from "./pages/UserDetails";
+import Explore from "./pages/Explore";
 
 function Home() {
   return (
@@ -30,16 +31,16 @@ function Home() {
 
 export default function App() {
   return (
-    <div className="bg-hitam font-sans">
+    <div className="bg-white font-sans">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Register />} />
         <Route
           path="/users"
           element={
-            <ProtectedRoute allowedRoles={["seller"]} >
+            <ProtectedRoute allowedRoles={["admin"]} >
               <Users />
             </ProtectedRoute>
           }
@@ -47,6 +48,7 @@ export default function App() {
         <Route
           path="/users/:id" 
           element={<UserDetails />} />
+        <Route path="/explore" element={<Explore/>}/>
       </Routes>
       <Footer />
     </div>

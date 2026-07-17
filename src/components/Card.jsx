@@ -20,7 +20,7 @@ export default function Card({
             </div>
             <div className="px-1">
                 <h3 className="font-bold text-white text-sm md:text-base">{title}</h3>
-                <p className="text-xs text-description leading-snug mt-1 md:text-sm">{description}</p>
+                <p className="text-xs text-pastelgreen leading-snug mt-1 md:text-sm">{description}</p>
             </div>
 
         </div>

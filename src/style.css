@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-    --color-hitam: #121421;
-    --color-putih: #FFFFFF;
-    --color-description: #919CC9;
+    --color-darkblue: #121421;
+    --color-grey: #919CC9;
+    --color-pastel-cyan: #26CCDF;
+    --color-pastel-green: #26DF95;
+    --color-pastel-blue: #2670DF;
 }
 
 @layer utilities {

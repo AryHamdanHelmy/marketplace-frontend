@@ -49,7 +49,7 @@ export default function Users() {
 
     const handleDelete = async (userId) => {
         const confirmDelete = window.confirm(
-            `Apakah anda yakin ingin menghapus pengguna dengan ID ${userId}?`
+            `Are you sure you want to delete the user with ID ${userId}?`
         );
         if (!confirmDelete) return;
         setDeletingId(userId);
@@ -57,13 +57,13 @@ export default function Users() {
             await apiRequest(`/users/${userId}`, { method: "DELETE" });
             setUsers((prev) => prev.filter((u) => u.id !== userId));
         } catch (err) {
-            alert(err.message || "Gagal menghapus pengguna");
+            alert(err.message || "Failed to delete user");
         } finally {
             setDeletingId(null);
         }
     }
     return (
-        <div className="min-h-screen bg-hitam text-white pt-24 px-6 py-12">
+        <div className="min-h-screen text-darkblue pt-24 px-6 py-12">
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-2xl font-semibold mb-6">User List</h1>
 
@@ -74,19 +74,19 @@ export default function Users() {
                 )}
 
                 {!loading && !error && users.length === 0 && (
-                    <p className="text-gray-400">Don't have user data.</p>
+                    <p className="text-gray-400">No users found.</p>
                 )}
 
                 {!loading && !error && users.length > 0 && (
                     <>
-                        <div className="overflow-x-auto rounded-lg border border-white/10">
+                        <div className="overflow-x-auto bg-white rounded-lg border-2 border-black/50">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-white/5">
+                                <thead className="bg-darkblue/90">
                                     <tr>
-                                        <th className="px-4 py-3 font-medium text-gray-300">No.</th>
-                                        <th className="px-4 py-3 font-medium text-gray-300">Name</th>
-                                        <th className="px-4 py-3 font-medium text-gray-300">Role</th>
-                                        <th className="px-4 py-3 font-medium text-gray-300 text-right">
+                                        <th className="px-4 py-3 font-medium text-pastel-green">No.</th>
+                                        <th className="px-4 py-3 font-medium text-pastel-green">Name</th>
+                                        <th className="px-4 py-3 font-medium text-pastel-green">Role</th>
+                                        <th className="px-4 py-3 font-medium text-pastel-green text-right">
                                             Detail
                                         </th>
                                         <th className="px-4 py-3 font-medium text-gray-300">Delete</th>
@@ -98,15 +98,15 @@ export default function Users() {
                                             key={user.id ?? idx}
                                             className="border-t border-white/10 hover:bg-white/5"
                                         >
-                                            <td className="px-4 py-3 text-gray-200">
+                                            <td className="px-4 py-3 text-darkblue">
                                                 {meta ? (meta.current_page - 1) * meta.per_page + idx + 1 : idx + 1}
                                             </td>
-                                            <td className="px-4 py-3 text-gray-200">{user.name}</td>
-                                            <td className="px-4 py-3 text-gray-200">{user.role}</td>
+                                            <td className="px-4 py-3 text-darkblue">{user.name}</td>
+                                            <td className="px-4 py-3 text-darkblue">{user.role}</td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link
                                                     to={`/users/${user.id}`}
-                                                    className="text-indigo-400 hover:underline"
+                                                    className="text-pastelgreen hover:underline"
                                                 >Show
                                                 </Link>
                                             </td>
@@ -116,7 +116,7 @@ export default function Users() {
                                                     disabled={deletingId === user.id}
                                                     className="text-red-400 hover:text-red-300 text-xs font-semibold disabled:opacity-50"
                                                 >
-                                                    {deletingId === user.id ? "Menghapus..." : "Delete"}
+                                                    {deletingId === user.id ? "Deleting..." : "Delete"}
                                                 </button>
                                             </td>
                                         </tr>
@@ -126,17 +126,16 @@ export default function Users() {
                         </div>
 
                         {meta && (
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4 text-sm text-gray-400">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4 text-sm text-black">
                                 <p className="text-center md:text-left">
-                                    Halaman {meta.current_page} dari {meta.last_page} — total{" "}
-                                    {meta.total} pengguna
+                                    Page {meta.current_page} of {meta.last_page} — {meta.total} users total
                                 </p>
 
                                 <div className="flex items-center justify-center gap-2 flex-wrap">
                                     <button
                                         onClick={() => goToPage(meta.current_page - 1)}
                                         disabled={meta.current_page <= 1}
-                                        className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                     >
                                         ← Prev
                                     </button>
@@ -146,7 +145,7 @@ export default function Users() {
                                     <button
                                         onClick={() => goToPage(meta.current_page + 1)}
                                         disabled={meta.current_page >= meta.last_page}
-                                        className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                     >
                                         Next →
                                     </button>
@@ -178,8 +177,8 @@ function PageNumbers({ meta, onGoToPage }) {
                     onClick={() => onGoToPage(p)}
                     className={`w-8 h-8 rounded-lg text-sm transition ${
                         p === current_page
-                            ? "bg-indigo-600 text-white"
-                            : "bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300"
+                            ? "bg-pastelblue text-white"
+                            : "bg-black/5 border border-black/10 hover:bg-black/10 text-black"
                     }`}
                 >
                     {p}

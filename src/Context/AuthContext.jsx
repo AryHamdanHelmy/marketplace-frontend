@@ -34,11 +34,13 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     isLoggedIn: !!user,
+    isAdmin:user?.role === "admin",
     loading,
     login,
     logout,
     getToken,
   };
+  console.log("AUTHCONTEXT VALUE:", value);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

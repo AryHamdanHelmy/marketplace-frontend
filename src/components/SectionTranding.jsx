@@ -30,12 +30,12 @@ const TrandingCard = [{
 export default function Tranding() {
     return (
         <div className="px-5 py-5 md:w-auto md:px-40">
-            <h1 className="text-putih text-2xl">
+            <h1 className="text-putih text-2xl font-bold">
                 Tranding
             </h1>
             <div className="flex overflow-x-auto gap-4 py-5 scrollbar-hide ">
                 {TrandingCard.map((cat) => (
-                    <div key={cat.title} className="min-w-[160px] flex-shrink-0">
+                    <div key={cat.title} className="min-w-[160px]">
                         <Card
                             title={cat.title}
                             description={cat.description}

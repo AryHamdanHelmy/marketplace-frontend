@@ -12,11 +12,6 @@ export default function Footer() {
                 <span className="text-description hover:text-white cursor-pointer transition text-sm">Terms of Service</span>
                 <span className="text-description hover:text-white cursor-pointer transition text-sm">Privacy Policy</span>
             </div>
-            <div className="flex justify-center gap-5 mb-6">
-                <a href="#"><img src={iconInstagram} alt="Instagram" className="w-6 h-6 opacity-60 hover:opacity-100 transition" /></a>
-                <a href="#"><img src={iconWhatsapp} alt="WhatsApp" className="w-6 h-6 opacity-60 hover:opacity-100 transition" /></a>
-                <a href="#"><img src={iconFacebook} alt="Facebook" className="w-6 h-6 opacity-60 hover:opacity-100 transition" /></a>
-            </div>
             <p className="text-description text-xs">© 2026 DibiTech. All rights reserved.</p>
         </footer>
     );

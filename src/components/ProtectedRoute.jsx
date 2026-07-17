@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-hitam">
-        <p className="text-gray-400">Memuat...</p>
+        <p className="text-gray-400">Loading...</p>
       </div>
     );
   }
@@ -16,7 +16,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-hitam">
-        <p className="text-red-400">Kamu tidak punya akses ke halaman ini.</p>
+        <p className="text-red-400">You don't have access to this page.</p>
       </div>
     );
   }
