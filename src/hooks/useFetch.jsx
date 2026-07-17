@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { apiRequest } from "../api/client";
+import { apiRequest } from "../api/Client";
 
 /**
  * Custom hook buat GET request standar (fetch on mount / on deps change).

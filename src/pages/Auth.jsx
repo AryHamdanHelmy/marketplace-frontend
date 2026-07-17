@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { apiRequest } from "../api/client";
+import { apiRequest } from "../api/Client";
 import EmailStep from "../components/organisms/EmailStep";
 import PasswordStep from "../components/organisms/PasswordStep";
 import Alert from "../components/molecules/Alert";

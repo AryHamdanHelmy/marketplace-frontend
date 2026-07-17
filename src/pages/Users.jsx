@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { apiRequest } from "../api/client";
+import { apiRequest } from "../api/Client";
 import { useFetch } from "../hooks/useFetch";
 
 const PER_PAGE = 10;
@@ -79,7 +79,7 @@ export default function Users() {
                                         <th className="px-4 py-3 font-medium text-pastel-green text-right">
                                             Detail
                                         </th>
-                                        <th className="px-4 py-3 font-medium text-gray-300">Delete</th>
+                                        <th className="px-4 py-3 font-medium text-pastel-green">Delete</th>
                                     </tr>
                                 </thead>
                                 <tbody>

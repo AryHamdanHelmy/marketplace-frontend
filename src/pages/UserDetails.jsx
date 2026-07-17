@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { apiRequest } from "../api/client";
+import { apiRequest } from "../api/Client";
 
 export default function UsersDetail() {
     const { id } = useParams();
@@ -61,17 +61,17 @@ export default function UsersDetail() {
     }, [id]);
 
     return (
-        <div className="min-h-screen bg-hitam text-white pt-24 px-6 py-12">
+        <div className="min-h-screen bg-hitam text-darkblue pt-24 px-6 py-12">
             <div className="max-w-lg mx-auto">
                 <Link
                     to="/users"
-                    className="text-sm text-indigo-400 hover:underline mb-6 inline-block"
+                    className="text-sm text-pastel-blue hover:underline mb-6 inline-block"
                 >
                     ← Back to user list
                 </Link>
                 <h1 className="text-2xl font-semibold mb-6">Detail User</h1>
 
-                {loading && <p className="text-gray-400">Load data...</p>}
+                {loading && <p className="text-black">Load data...</p>}
 
                 {!loading && error && (
                     <p className="text-red-400">Error: {error}</p>
@@ -79,7 +79,7 @@ export default function UsersDetail() {
 
                 {!loading && !error && user && (
                     <>
-                        <div className="rounded-lg border border-white/10 bg-white/5 divide-y divide-white/10 mb-8">
+                        <div className="rounded-lg border border-black bg-black/5 divide-y divide-black mb-8">
                             <DetailRow label="ID" value={user.id} />
                             <DetailRow label="Name" value={user.name} />
                             <DetailRow label="Email" value={user.email} />
@@ -98,7 +98,7 @@ export default function UsersDetail() {
                                         Belum ada produk terdaftar.
                                     </p>
                                 ) : (
-                                    <div className="rounded-lg border border-white/10 bg-white/5 divide-y divide-white/10">
+                                    <div className="rounded-lg border border-black/10 divide-y divide-black/10">
                                         {products.map((p) => (
                                             <div
                                                 key={p.id}
@@ -124,8 +124,8 @@ export default function UsersDetail() {
 function DetailRow({ label, value }) {
     return (
         <div className="flex justify-between px-4 py-3 text-sm">
-            <span className="text-gray-400">{label}</span>
-            <span className="text-gray-100">{value ?? "-"}</span>
+            <span className="text-black">{label}</span>
+            <span className="text-black">{value ?? "-"}</span>
         </div>
     );
 }
