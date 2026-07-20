@@ -14,6 +14,9 @@ import Users from "./pages/Users";
 import UserDetails from "./pages/UserDetails";
 import Explore from "./pages/Explore";
 import Cart from "./pages/Cart";
+import SellerDashboard from "./pages/SellerDashboard";
+import AddProduct from "./pages/AddProduct";
+import EditProduct from "./pages/EditProduct";
 
 function Home() {
   return (
@@ -52,6 +55,30 @@ export default function App() {
           <ProtectedRoute>
             <Cart/>
           </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["seller"]}>
+              <SellerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/products/:id/edit"
+          element={
+            <ProtectedRoute allowedRoles={["seller"]}>
+              <EditProduct/>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/products/new"
+          element={
+            <ProtectedRoute allowedRoles={["seller"]}>
+              <AddProduct />
+            </ProtectedRoute>
           }
         />
         <Route

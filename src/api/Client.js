@@ -1,11 +1,14 @@
-const BASE_URL = import.meta.env.VITE_API_URL ||"http://127.0.0.1:8000/api";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("token");
+  const isFormData = options.body instanceof FormData;
 
   const headers = {
-    "Content-Type": "application/json",
     Accept: "application/json",
+    // Kalau FormData, jangan set Content-Type — browser yang set otomatis
+    // beserta boundary-nya untuk multipart/form-data
+    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -13,7 +16,12 @@ export async function apiRequest(endpoint, options = {}) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    // Kalau FormData kirim as-is, kalau object biasa JSON.stringify
+    body: options.body
+      ? isFormData
+        ? options.body
+        : JSON.stringify(options.body)
+      : undefined,
   });
 
   const data = await response.json();
