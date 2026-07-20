@@ -92,7 +92,11 @@ export default function Navbar() {
                         {!isAdminPage && (
                             <>
                                 <li className="hover:text-pastel-blue cursor-pointer transition">Category</li>
-                                <li className="hover:text-pastel-blue cursor-pointer transition">Cart</li>
+                                <li>
+                                    <Link to="/cart" className="hover:text-pastel-blue cursor-pointer transition">
+                                        Cart
+                                    </Link>
+                                </li>
                             </>
                         )}
                         {isAdmin && (
@@ -153,6 +157,11 @@ export default function Navbar() {
                                                     Explore Products
                                                 </Link>
                                             </li>
+                                            <li>
+                                                <Link to="/cart" className="hover:text-sky-600 transition">
+                                                    Cart
+                                                </Link>
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
@@ -172,7 +181,15 @@ export default function Navbar() {
                         {!isAdminPage && (
                             <>
                                 <li className="hover:text-pastel-blue cursor-pointer transition">Category</li>
-                                <li className="hover:text-pastel-blue cursor-pointer transition">Cart</li>
+                                <li>
+                                    <Link
+                                        to="/cart"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="hover:text-pastel-blue cursor-pointer transition"
+                                    >
+                                        Cart
+                                    </Link>
+                                </li>
                             </>
                         )}
                         {isAdmin && (

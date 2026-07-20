@@ -1,11 +1,36 @@
+import { useState } from "react";
+import { apiRequest } from "../../api/Client";
+
 export default function ProductCard({ product, onClick }) {
   const { title, description, price, thumbnail, rating_label, category } = product;
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
 
   const formattedPrice = new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
   }).format(price ?? 0);
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation(); // supaya gak ikut trigger onClick card (navigasi ke detail)
+
+    if (adding) return;
+    setAdding(true);
+
+    try {
+      await apiRequest("/cart", {
+        method: "POST",
+        body: { product_id: product.id, quantity: 1 },
+      });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1500); // balik ke teks normal setelah 1.5 detik
+    } catch (err) {
+      alert(err.message || "Failed to add product to cart");
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div
@@ -49,6 +74,18 @@ export default function ProductCard({ product, onClick }) {
         <p className="text-sm font-semibold text-black mt-1.5">
           {formattedPrice}
         </p>
+
+        <button
+          onClick={handleAddToCart}
+          disabled={adding}
+          className={`mt-2 w-full text-xs font-semibold rounded-lg py-1.5 transition disabled:opacity-60 ${
+            added
+              ? "bg-emerald-600 text-white"
+              : "bg-pastel-blue hover:bg-pastel-cyan text-white"
+          }`}
+        >
+          {added ? "Added ✓" : adding ? "Adding..." : "Add to Cart"}
+        </button>
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ export default function Auth() {
     login(data.token, data.user);
     setSuccess(true);
 
-    const destination = data.user.role === "seller" ? "/users" : "/";
+    const destination ="/explore";
 
     setTimeout(() => {
       navigate(destination);

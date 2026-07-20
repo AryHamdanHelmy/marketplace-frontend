@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import Users from "./pages/Users";
 import UserDetails from "./pages/UserDetails";
 import Explore from "./pages/Explore";
+import Cart from "./pages/Cart";
 
 function Home() {
   return (
@@ -43,6 +44,14 @@ export default function App() {
             <ProtectedRoute allowedRoles={["admin"]} >
               <Users />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+          <ProtectedRoute>
+            <Cart/>
+          </ProtectedRoute>
           }
         />
         <Route

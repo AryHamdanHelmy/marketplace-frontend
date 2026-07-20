@@ -78,7 +78,7 @@ export default function Register() {
       setSuccess(true);
 
       setTimeout(() => {
-        navigate("/");
+        navigate("/explore");
       }, 1000);
     } catch (err) {
       setServerError(err.message || "Registration failed");
