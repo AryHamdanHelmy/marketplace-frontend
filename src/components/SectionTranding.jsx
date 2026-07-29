@@ -36,20 +36,20 @@ export default function Tranding() {
     return (
         <div className="px-5 py-5 md:px-8">
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="px-5 py-3 bg-gray-50">
-                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <div className="px-6 py-4 border-b border-gray-100">
+                    <h2 className="text-sm font-bold text-darkblue uppercase tracking-wide">
                         Tranding
                     </h2>
                 </div>
 
                 {/* Desktop: grid, Mobile: horizontal scroll */}
-                <div className="flex md:grid grid-cols-5">
+                <div className="flex overflow-x-auto scrollbar-hide md:grid grid-cols-5">
                     {TrandingCard.map((cat, index) => (
                         <button
                             key={index}
                             className="flex flex-col items-center gap-3 p-3 hover:bg-pastel-blue/40 rounded-lg transition cursor-pointer group"
                         >
-                            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
+                            <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                                 {cat.image ? (
                                     <img
                                         src={cat.image}

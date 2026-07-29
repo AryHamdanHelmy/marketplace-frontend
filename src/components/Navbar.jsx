@@ -246,22 +246,24 @@ export default function Navbar() {
                         {!isAdminPage && (
                             <>
                                 <Link
-                                    to="/explore"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="py-2.5 text-sm text-gray-700 hover:text-darkblue font-medium border-b border-gray-50 transition"
-                                >
-                                    Explore Products
-                                </Link>
-                                <Link
                                     to="/cart"
                                     onClick={() => setMenuOpen(false)}
                                     className="py-2.5 text-sm text-gray-700 hover:text-darkblue font-medium border-b border-gray-50 transition flex items-center gap-2"
                                 >
                                     <ShoppingCart size={16} /> Cart
                                 </Link>
+                                <Link
+                                    to="/explore"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="py-2.5 text-sm text-gray-700 hover:text-darkblue font-medium border-b border-gray-50 transition"
+                                >
+                                    Explore Products
+                                </Link>
+                                
                             </>
                         )}
                         {isAdmin && (
+                            <>
                             <Link
                                 to="/users"
                                 onClick={() => setMenuOpen(false)}
@@ -269,6 +271,21 @@ export default function Navbar() {
                             >
                                 Manage Users
                             </Link>
+                            <Link
+                                to="/admin/products"
+                                onClick={() => setMenuOpen(false)}
+                                className={`py-2.5 text-sm font-medium border-b border-gray-50 transition ${isAdminPage ? "text-pastel-blue" : "text-gray-700 hover:text-darkblue"}`}
+                            >
+                                Product
+                            </Link>
+                            <Link
+                                to="/admin/categories"
+                                onClick={() => setMenuOpen(false)}
+                                className={`py-2.5 text-sm font-medium border-b border-gray-50 transition ${isAdminPage ? "text-pastel-blue" : "text-gray-700 hover:text-darkblue"}`}
+                            >
+                                Manage Categories
+                            </Link>
+                            </>
                         )}
                         {isSeller && (
                             <Link

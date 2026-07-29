@@ -49,12 +49,12 @@ export default function Categories() {
                                     onClick={() => navigate(`/explore?category_id=${cat.id}`)}
                                     className="group shrink-0 w-32 md:w-auto p-6 flex flex-col items-center gap-4 hover:bg-gray-50 transition cursor-pointer"
                                 >
-                                    <div className="w-24 h-24 rounded-full bg-pastel-blue flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-300">
+                                    <div className="w-24 h-24 rounded-xl flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-300">
                                         {cat.image_url ? (
                                             <img
                                                 src={cat.image_url}
                                                 alt={cat.name}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-contain"
                                             />
                                         ) : (
                                             <Icon size={40} className="text-white" strokeWidth={1.5} />
