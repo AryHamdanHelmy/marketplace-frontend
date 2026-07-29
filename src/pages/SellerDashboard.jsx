@@ -4,12 +4,16 @@ import { useAuth } from "../context/AuthContext";
 import { useFetch } from "../hooks/useFetch";
 import { apiRequest } from "../api/Client";
 import SellerSidebar from "../components/organisms/SellerSidebar";
-import { Wallet, ShoppingBag, Star, Download, Plus, Pencil, Trash2 } from "lucide-react";
+import { Wallet, ShoppingBag, Star, Download, Plus, Pencil, Trash2, Package } from "lucide-react";
 
 export default function SellerDashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const { data, loading, error, setData } = useFetch("/products", []);
+    const { data, loading, error, setData } = useFetch("/products?status=all", []);
+
+    // Ambil semua pesanan toko ini — per_page besar supaya statistiknya menyeluruh
+    const { data: ordersRes, loading: loadingOrders } = useFetch("/seller/orders?per_page=100", []);
+
     const [deletingId, setDeletingId] = useState(null);
 
     const allProducts = Array.isArray(data) ? data : data?.data || [];
@@ -17,7 +21,18 @@ export default function SellerDashboard() {
         (p) => String(p.seller?.id) === String(user?.id)
     );
 
-    const totalStock = myProducts.reduce((sum, p) => sum + (p.stock ?? 0), 0);
+    const orders = ordersRes?.data || [];
+
+    // Pendapatan hanya dihitung dari pesanan yang benar-benar menghasilkan uang.
+    // Pesanan pending belum dibayar, cancelled sudah dibatalkan — keduanya dikecualikan.
+    const revenueStatuses = ["paid", "shipped", "completed"];
+    const totalSales = orders
+        .filter((o) => revenueStatuses.includes(o.status))
+        .reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0);
+
+    const totalOrders = orders.filter((o) => o.status !== "cancelled").length;
+    const pendingShipment = orders.filter((o) => o.status === "paid").length;
+
     const avgRating =
         myProducts.length > 0
             ? (
@@ -90,22 +105,30 @@ export default function SellerDashboard() {
                     {!loading && !error && (
                         <>
                             {/* Metrics */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
                                 <MetricCard
                                     label="Total Sales"
-                                    value="Rp 0"
-                                    note="No sales data yet"
+                                    value={loadingOrders ? "..." : formatPrice(totalSales)}
+                                    note="From paid orders onward"
                                     icon={Wallet}
                                     iconBg="bg-pastel-blue/15"
                                     iconColor="text-pastel-blue"
                                 />
                                 <MetricCard
                                     label="Total Orders"
-                                    value="0"
-                                    note="No orders yet"
+                                    value={loadingOrders ? "..." : String(totalOrders)}
+                                    note={`${orders.length - totalOrders} cancelled`}
                                     icon={ShoppingBag}
                                     iconBg="bg-emerald-100"
                                     iconColor="text-emerald-600"
+                                />
+                                <MetricCard
+                                    label="To Ship"
+                                    value={loadingOrders ? "..." : String(pendingShipment)}
+                                    note={pendingShipment > 0 ? "Needs your action" : "All caught up"}
+                                    icon={Package}
+                                    iconBg="bg-indigo-100"
+                                    iconColor="text-indigo-500"
                                 />
                                 <MetricCard
                                     label="Average Rating"
@@ -117,9 +140,21 @@ export default function SellerDashboard() {
                                 />
                             </div>
 
-                            <p className="text-xs text-black/40 mb-8 -mt-4">
-                                Sales &amp; order tracking requires a transactions system that isn't built yet.
-                            </p>
+                            {/* Pengingat kalau ada pesanan menunggu dikirim */}
+                            {!loadingOrders && pendingShipment > 0 && (
+                                <Link
+                                    to="/seller/orders?status=paid"
+                                    className="flex items-center justify-between gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-5 py-3 mb-8 hover:bg-indigo-100/50 transition"
+                                >
+                                    <p className="text-sm text-indigo-700">
+                                        You have <strong>{pendingShipment}</strong> order
+                                        {pendingShipment !== 1 ? "s" : ""} waiting to be shipped.
+                                    </p>
+                                    <span className="text-sm font-semibold text-indigo-600 shrink-0">
+                                        View →
+                                    </span>
+                                </Link>
+                            )}
 
                             {/* Products table */}
                             <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
@@ -222,7 +257,7 @@ function MetricCard({ label, value, note, icon: Icon, iconBg, iconColor }) {
                 <Icon size={18} className={iconColor} />
             </div>
             <p className="text-xs font-semibold text-black/50 uppercase mb-2 pr-12">{label}</p>
-            <h3 className="text-2xl md:text-3xl font-bold text-darkblue mb-1">{value}</h3>
+            <h3 className="text-xl md:text-2xl font-bold text-darkblue mb-1">{value}</h3>
             <p className="text-xs text-black/40">{note}</p>
         </div>
     );

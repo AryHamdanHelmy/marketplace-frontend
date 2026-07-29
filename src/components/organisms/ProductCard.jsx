@@ -35,7 +35,7 @@ export default function ProductCard({ product, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="flex flex-col gap-2 cursor-pointer group"
+      className="flex flex-col gap-2 cursor-pointer group h-full"
     >
       <div className="rounded-2xl overflow-hidden aspect-square w-full bg-black/5">
         {thumbnail ? (
@@ -51,9 +51,9 @@ export default function ProductCard({ product, onClick }) {
         )}
       </div>
 
-      <div className="px-1">
+      <div className="px-1 flex flex-col flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-bold text-black text-sm md:text-base truncate">
+          <h3 className="font-bold text-black text-sm md:text-base line-clamp-2">
             {title}
           </h3>
           {rating_label && (
@@ -78,7 +78,7 @@ export default function ProductCard({ product, onClick }) {
         <button
           onClick={handleAddToCart}
           disabled={adding}
-          className={`mt-2 w-full text-xs font-semibold rounded-lg py-1.5 transition disabled:opacity-60 ${
+          className={`mt-auto pt-2 w-full text-xs font-semibold rounded-lg py-1.5 transition disabled:opacity-60 ${
             added
               ? "bg-emerald-600 text-white"
               : "bg-pastel-blue hover:bg-pastel-cyan text-white"

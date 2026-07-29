@@ -123,12 +123,26 @@ export default function Navbar() {
                     )}
 
                     {isAdmin && (
-                        <Link
+                        <><Link
                             to="/users"
                             className={`text-sm font-medium transition ${isAdminPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
                         >
                             Manage Users
                         </Link>
+                        <Link
+                            to="/admin/categories"
+                            className={`text-sm font-medium transition ${isAdminPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
+                        >
+                            Categories
+                        </Link>
+                        <Link
+                            to="/admin/products"
+                            className={`text-sm font-medium transition ${isAdminPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
+                        >
+                            Products
+                        </Link>
+                        </>
+
                     )}
 
                     {isSeller && (
@@ -177,9 +191,17 @@ export default function Navbar() {
                                     {/* Menu items */}
                                     <div className="px-2 py-2">
                                         {isAdmin && (
+                                            <>
                                             <Link to="/users" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition">
                                                 Manage Users
                                             </Link>
+                                            <Link to="/admin/products" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition">
+                                                Product
+                                            </Link>
+                                            <Link to="/admin/categories" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition">
+                                                Categories
+                                            </Link>
+                                            </>
                                         )}
                                         {isSeller && (
                                             <Link to="/seller/dashboard" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition">
@@ -187,7 +209,7 @@ export default function Navbar() {
                                             </Link>
                                         )}
                                         <Link to="/explore" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition">
-                                            Explore Products
+                                            Explore
                                         </Link>
                                         <Link to="/cart" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition">
                                             My Cart

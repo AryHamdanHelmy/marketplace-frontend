@@ -17,6 +17,13 @@ import Cart from "./pages/Cart";
 import SellerDashboard from "./pages/SellerDashboard";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
+import AdminCategories from "./pages/AdminCategories";
+import AdminProducts from "./pages/AdminProducts";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import MyOrders from "./pages/MyOrders";
+import SellerOrders from "./pages/SellerOrders";
+import ProductImport from "./pages/ProductImport";
 
 function Home() {
   return (
@@ -58,6 +65,30 @@ export default function App() {
           }
         />
         <Route
+          path="/checkout"
+          element={
+          <ProtectedRoute>
+            <Checkout/>
+          </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/success/:groupId"
+          element={
+          <ProtectedRoute>
+            <OrderSuccess/>
+          </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+          <ProtectedRoute>
+            <MyOrders/>
+          </ProtectedRoute>
+          }
+        />
+        <Route
           path="/seller/dashboard"
           element={
             <ProtectedRoute allowedRoles={["seller"]}>
@@ -68,7 +99,7 @@ export default function App() {
         <Route
           path="/seller/products/:id/edit"
           element={
-            <ProtectedRoute allowedRoles={["seller"]}>
+            <ProtectedRoute allowedRoles={["seller","admin"]}>
               <EditProduct/>
             </ProtectedRoute>
           }
@@ -80,10 +111,40 @@ export default function App() {
               <AddProduct />
             </ProtectedRoute>
           }
+        /><Route
+          path="/seller/orders"
+          element={
+            <ProtectedRoute allowedRoles={["seller"]}>
+              <SellerOrders />
+            </ProtectedRoute>
+          }
         />
         <Route
+          path="/admin/categories" 
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminCategories />
+            </ProtectedRoute>} 
+        />
+        <Route
+          path="/admin/products" 
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProducts/>
+            </ProtectedRoute>} 
+        />
+        <Route
+          path="/seller/products/import" 
+          element={
+            <ProtectedRoute allowedRoles={["seller"]}>
+              <ProductImport/>
+            </ProtectedRoute>} 
+        />
+        <Route path="/explore" element={<Explore/>}/>
+        <Route
           path="/users/:id" 
-          element={<UserDetails />} />
+          element={<UserDetails />} 
+        />
         <Route path="/explore" element={<Explore/>}/>
       </Routes>
       <Footer />

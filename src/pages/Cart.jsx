@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/Client";
 import { useFetch } from "../hooks/useFetch";
 
@@ -7,6 +7,7 @@ export default function Cart() {
     const { data, loading, error, setData } = useFetch("/cart", []);
     const [updatingId, setUpdatingId] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
+    const navigate = useNavigate();
 
     const items = data?.data || [];
 
@@ -272,8 +273,8 @@ export default function Cart() {
                         </div>
                         <button
                             disabled={selectedIds.length === 0}
+                            onClick={() => navigate("/checkout")}
                             className="w-full bg-pastel-blue hover:bg-pastel-green text-white hover:text-black font-semibold rounded-full py-3 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                            onClick={() => alert("Checkout belum tersedia")}
                         >
                             Checkout ({selectedIds.length})
                         </button>

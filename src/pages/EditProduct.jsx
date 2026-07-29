@@ -3,16 +3,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiRequest } from "../api/Client";
 import { useFetch } from "../hooks/useFetch";
 import SellerSidebar from "../components/organisms/SellerSidebar";
+import { useAuth } from "../context/AuthContext";
 
 export default function EditProduct() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isAdmin } = useAuth();
 
     const { data: productRes, loading: loadingProduct, error: loadError } = useFetch(
         `/products/${id}`,
         [id]
     );
-    const { data: categoriesRes } = useFetch("/categories", []);
+    const { data: categoriesRes } = useFetch("/categories?flat=1", []);
     const categories = Array.isArray(categoriesRes)
         ? categoriesRes
         : categoriesRes?.data || [];
@@ -117,7 +119,7 @@ export default function EditProduct() {
             }
 
             setSuccess(true);
-            setTimeout(() => navigate("/seller/dashboard"), 1000);
+            setTimeout(() => navigate(isAdmin?"/admin/products":"/seller/dashboard"), 1000);
         } catch (err) {
             setServerError(err.message || "Failed to update product");
             setSubmitting(false);
@@ -130,7 +132,7 @@ export default function EditProduct() {
     return (
         <>
             <SellerSidebar />
-            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-[280px] md:pr-10">
+            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-70 md:pr-10">
                 <div className="max-w-2xl mx-auto">
                     <h1 className="text-2xl font-bold text-darkblue mb-1">Edit Product</h1>
                     <p className="text-sm text-black/60 mb-6">
@@ -241,10 +243,20 @@ export default function EditProduct() {
                                             className={inputClass(errors.category_id)}
                                         >
                                             <option value="">Select category</option>
-                                            {categories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>
-                                                    {cat.name}
-                                                </option>
+                                            {Object.entries(
+                                                categories.reduce((acc, cat) => {
+                                                    const group = cat.parent_name || "Lainnya";
+                                                    (acc[group] ||= []).push(cat);
+                                                    return acc;
+                                                }, {})
+                                            ).map(([groupName, items]) => (
+                                                <optgroup key={groupName} label={groupName}>
+                                                    {items.map((cat) => (
+                                                        <option key={cat.id} value={cat.id}>
+                                                            {cat.name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
                                             ))}
                                         </select>
                                     </Field>
@@ -313,7 +325,7 @@ export default function EditProduct() {
                                 <div className="flex items-center justify-end gap-3 pt-2">
                                     <button
                                         type="button"
-                                        onClick={() => navigate("/seller/dashboard")}
+                                        onClick={() => navigate(isAdmin? "/admin/products" : "/seller/dashboard")}
                                         className="px-6 py-2 rounded-lg text-sm font-medium text-pastel-blue hover:bg-black/5 transition"
                                     >
                                         Cancel

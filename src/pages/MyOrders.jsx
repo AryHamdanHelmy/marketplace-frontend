@@ -1,0 +1,212 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useFetch } from "../hooks/useFetch";
+import { apiRequest } from "../api/Client";
+
+const STATUS_TABS = [
+    { value: "",          label: "All" },
+    { value: "pending",   label: "Unpaid" },
+    { value: "paid",      label: "Paid" },
+    { value: "shipped",   label: "Shipped" },
+    { value: "completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" },
+];
+
+const STATUS_STYLE = {
+    pending:   "bg-amber-100 text-amber-600",
+    paid:      "bg-blue-100 text-blue-600",
+    shipped:   "bg-indigo-100 text-indigo-600",
+    completed: "bg-emerald-100 text-emerald-700",
+    cancelled: "bg-red-100 text-red-500",
+};
+
+export default function MyOrders() {
+    const [status, setStatus] = useState("");
+    const query = status ? `/orders?status=${status}` : "/orders";
+    const { data, loading, error, refetch } = useFetch(query, [status]);
+
+    const [processingId, setProcessingId] = useState(null);
+    const [actionError, setActionError] = useState("");
+
+    const orders = data?.data || [];
+
+    const formatPrice = (value) =>
+        new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(value ?? 0);
+
+    const formatDate = (iso) =>
+        new Date(iso).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        });
+
+    const handlePay = async (orderId) => {
+        if (processingId) return;
+        setProcessingId(orderId);
+        setActionError("");
+
+        try {
+            await apiRequest(`/orders/${orderId}/pay`, { method: "POST" });
+            refetch();
+        } catch (err) {
+            setActionError(err.message || "Payment failed");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleCancel = async (orderId) => {
+        if (processingId) return;
+        if (!window.confirm("Cancel this order? Stock will be returned.")) return;
+
+        setProcessingId(orderId);
+        setActionError("");
+
+        try {
+            await apiRequest(`/orders/${orderId}/cancel`, { method: "POST" });
+            refetch();
+        } catch (err) {
+            setActionError(err.message || "Cancellation failed");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:px-8">
+            <div className="max-w-3xl mx-auto">
+
+                <h1 className="text-2xl font-bold text-darkblue mb-1">My Orders</h1>
+                <p className="text-sm text-gray-400 mb-5">
+                    Track and manage your purchases.
+                </p>
+
+                {/* Status tabs */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 mb-5">
+                    {STATUS_TABS.map((tab) => (
+                        <button
+                            key={tab.value}
+                            onClick={() => setStatus(tab.value)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition ${
+                                status === tab.value
+                                    ? "bg-pastel-blue text-white"
+                                    : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {actionError && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-4">
+                        {actionError}
+                    </div>
+                )}
+
+                {/* Loading */}
+                {loading && (
+                    <div className="flex flex-col gap-4">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
+                                <div className="h-4 bg-gray-100 rounded w-1/3 mb-3 animate-pulse" />
+                                <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {!loading && error && (
+                    <p className="text-red-500 text-sm">Error: {error}</p>
+                )}
+
+                {/* Empty */}
+                {!loading && !error && orders.length === 0 && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+                        <div className="text-4xl mb-3">📦</div>
+                        <p className="text-gray-400 text-sm mb-3">No orders found.</p>
+                        <Link to="/explore" className="text-pastel-blue text-sm hover:underline">
+                            Start shopping →
+                        </Link>
+                    </div>
+                )}
+
+                {/* Order list */}
+                {!loading && orders.length > 0 && (
+                    <div className="flex flex-col gap-4">
+                        {orders.map((order) => (
+                            <div
+                                key={order.id}
+                                className={`bg-white border border-gray-200 rounded-xl overflow-hidden transition-opacity ${
+                                    processingId === order.id ? "opacity-50" : ""
+                                }`}
+                            >
+                                {/* Header */}
+                                <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-darkblue truncate">
+                                            {order.seller_name}
+                                        </p>
+                                        <p className="text-xs text-gray-400 font-mono mt-0.5">
+                                            {order.invoice_number}
+                                        </p>
+                                    </div>
+                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
+                                        STATUS_STYLE[order.status] || "bg-gray-100 text-gray-500"
+                                    }`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+
+                                {/* Body */}
+                                <div className="px-5 py-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs text-gray-400">
+                                            {formatDate(order.created_at)} · {order.item_count} item
+                                            {order.item_count !== 1 ? "s" : ""}
+                                        </span>
+                                        <span className="text-xs text-gray-400 capitalize">
+                                            {order.payment?.method?.replace("_", " ")}
+                                        </span>
+                                    </div>
+
+                                    <p className="text-lg font-bold text-darkblue">
+                                        {formatPrice(order.total_amount)}
+                                    </p>
+                                </div>
+
+                                {/* Actions */}
+                                {(order.status === "pending" || order.is_cancellable) && (
+                                    <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                                        {order.is_cancellable && (
+                                            <button
+                                                onClick={() => handleCancel(order.id)}
+                                                disabled={processingId === order.id}
+                                                className="px-4 py-2 text-sm font-medium text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                        {order.status === "pending" && (
+                                            <button
+                                                onClick={() => handlePay(order.id)}
+                                                disabled={processingId === order.id}
+                                                className="px-5 py-2 text-sm font-semibold text-white bg-pastel-blue hover:bg-pastel-cyan rounded-lg transition disabled:opacity-40"
+                                            >
+                                                {processingId === order.id ? "Processing..." : "Pay Now"}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

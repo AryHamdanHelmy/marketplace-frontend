@@ -28,6 +28,9 @@ export async function apiRequest(endpoint, options = {}) {
 
   if (!response.ok) {
     const message = data.message || "Terjadi kesalahan pada server";
+    const error = new Error(message);
+    error.errors = data.errors;
+    error.status = response.status;
     throw new Error(message);
   }
 

@@ -6,7 +6,7 @@ import SellerSidebar from "../components/organisms/SellerSidebar";
 
 export default function AddProduct() {
     const navigate = useNavigate();
-    const { data: categoriesRes } = useFetch("/categories", []);
+    const { data: categoriesRes } = useFetch("/categories?flat=1", []);
     const categories = Array.isArray(categoriesRes)
         ? categoriesRes
         : categoriesRes?.data || [];
@@ -106,7 +106,7 @@ export default function AddProduct() {
     return (
         <>
             <SellerSidebar />
-            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-[280px] md:pr-10">
+            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-70 md:pr-10">
                 <div className="max-w-2xl mx-auto">
                     <h1 className="text-2xl font-bold text-darkblue mb-1">Add New Product</h1>
                     <p className="text-sm text-black/60 mb-6">
@@ -198,10 +198,20 @@ export default function AddProduct() {
                                     className={inputClass(errors.category_id)}
                                 >
                                     <option value="">Select category</option>
-                                    {categories.map((cat) => (
-                                        <option key={cat.id} value={cat.id}>
-                                            {cat.name}
-                                        </option>
+                                    {Object.entries(
+                                        categories.reduce((acc, cat) => {
+                                            const group = cat.parent_name || "Lainnya";
+                                            (acc[group] ||= []).push(cat);
+                                            return acc;
+                                        }, {})
+                                    ).map(([groupName, items]) => (
+                                        <optgroup key={groupName} label={groupName}>
+                                            {items.map((cat) => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
                                     ))}
                                 </select>
                             </Field>
