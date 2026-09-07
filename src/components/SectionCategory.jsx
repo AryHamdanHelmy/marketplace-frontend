@@ -21,7 +21,7 @@ export default function Categories() {
     return (
         <div className="px-5 py-8 md:px-8">
             <div className="bg-white rounded-2xl border border-line/60 overflow-hidden">
-                <div className="px-6 py-4 border-b border-line/40">
+                <div className="px-6 py-4">
                     <h2 className="text-title text-textPrimary uppercase">
                         Category
                     </h2>

@@ -67,8 +67,8 @@ export default function NavbarMobile({
             {/* Top bar — logo + search */}
             <header className="fixed top-0 left-0 w-full z-50 bg-white border-b border-gray-200">
                 <div className="flex items-center gap-3 px-4 h-14">
-                    <Link to={homePath} className="shrink-0">
-                        <img src={logoImage} alt="Rapaku" className="w-auto h-6" />
+                    <Link to={"/"} className="shrink-0">
+                        <img src={logoImage} alt="Rapaku" className="w-auto h-7" />
                     </Link>
 
                     <form onSubmit={handleSearchSubmit} className="flex-1 min-w-0">
