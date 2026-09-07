@@ -11,12 +11,12 @@ export default function Featured() {
     return (
         <div className="px-5 py-8 md:px-8">
             <div className="flex items-center justify-between px-6 py-4 mb-4">
-                <h2 className="text-sm font-bold text-darkblue uppercase tracking-wide">
+                <h2 className="text-title text-textPrimary uppercase">
                     Latest Products
                 </h2>
                 <Link
                     to="/explore"
-                    className="text-xs font-semibold text-pastel-blue hover:underline shrink-0"
+                    className="text-label text-textSecondary hover:underline shrink-0"
                 >
                     View all →
                 </Link>
@@ -26,21 +26,21 @@ export default function Featured() {
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 md:grid md:overflow-visible md-pb-0 md:grid-cols-6">
                     {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="shrink-0 w-37 md:w-auto flex flex-col gap-2">
-                            <div className="aspect-square bg-gray-100 rounded-2xl animate-pulse" />
-                            <div className="h-3 w-3/4 bg-gray-100 rounded animate-pulse" />
-                            <div className="h-3 w-1/2 bg-gray-100 rounded animate-pulse" />
+                            <div className="aspect-square bg-background rounded-2xl animate-pulse" />
+                            <div className="h-3 w-3/4 bg-background rounded animate-pulse" />
+                            <div className="h-3 w-1/2 bg-background rounded animate-pulse" />
                         </div>
                     ))}
                 </div>
             )}
 
             {!loading && error && (
-                <p className="text-sm text-red-500">Error: {error}</p>
+                <p className="text-sm text-danger">Error: {error}</p>
             )}
 
             {!loading && !error && products.length === 0 && (
-                <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center">
-                    <p className="text-sm text-gray-400">No products available yet.</p>
+                <div className="bg-white border border-line rounded-2xl p-10 text-center">
+                    <p className="text-sm text-textSecondary">No products available yet.</p>
                 </div>
             )}
 

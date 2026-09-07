@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-    LayoutDashboard, PlusCircle, Store, ShoppingBag, Upload, Menu, X,
+    LayoutDashboard, PlusCircle, Store, ShoppingBag, Upload, X,
 } from "lucide-react";
+import { useSellerNav } from "../../context/SellerNavContext";
 
 const navItems = [
     { label: "Dashboard",   to: "/seller/dashboard",       icon: LayoutDashboard },
@@ -13,27 +13,9 @@ const navItems = [
 
 export default function SellerSidebar() {
     const location = useLocation();
-    const [open, setOpen] = useState(false);
+    const { open, close } = useSellerNav();
 
     const isActive = (to) => location.pathname === to;
-
-    // Tutup drawer tiap pindah halaman
-    useEffect(() => {
-        setOpen(false);
-    }, [location.pathname]);
-
-    // Kunci scroll body saat drawer terbuka
-    useEffect(() => {
-        document.body.style.overflow = open ? "hidden" : "";
-        return () => { document.body.style.overflow = ""; };
-    }, [open]);
-
-    // Tutup dengan tombol Escape
-    useEffect(() => {
-        const onKey = (e) => e.key === "Escape" && setOpen(false);
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, []);
 
     const navContent = (
         <>
@@ -68,31 +50,14 @@ export default function SellerSidebar() {
 
     return (
         <>
-            {/* Tombol pembuka — mobile saja */}
-            <button
-                onClick={() => setOpen(true)}
-                aria-label="Open seller menu"
-                className="md:hidden fixed top-20 left-80 z-30 w-10 h-10 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center justify-center text-darkblue"
-            >
-                <Menu size={18} />
-            </button>
-
-            {/* Overlay */}
-            <div
-                onClick={() => setOpen(false)}
-                className={`md:hidden fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 ${
-                    open ? "opacity-100" : "opacity-0 pointer-events-none"
-                }`}
-            />
-
-            {/* Drawer — mobile */}
+            {/* Drawer — mobile, tanpa overlay */}
             <aside
-                className={`md:hidden fixed top-0 left-0 h-full w-64 z-50 bg-white border-r border-gray-200 flex flex-col py-6 transition-transform duration-250 ease-out ${
+                className={`md:hidden fixed top-14 left-0 bottom-16 w-64 z-40 bg-white border-r border-gray-200 shadow-xl flex flex-col py-6 overflow-y-auto transition-transform duration-200 ease-out ${
                     open ? "translate-x-0" : "-translate-x-full"
                 }`}
             >
                 <button
-                    onClick={() => setOpen(false)}
+                    onClick={close}
                     aria-label="Close menu"
                     className="absolute top-4 right-4 text-gray-400 hover:text-darkblue"
                 >

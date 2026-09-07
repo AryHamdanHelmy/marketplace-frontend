@@ -66,33 +66,33 @@ export default function Checkout() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-32 md:px-8">
+        <div className="min-h-screen bg-background pt-24 px-5 pb-32 md:px-8">
             <div className="max-w-3xl mx-auto">
 
-                <h1 className="text-2xl font-bold text-darkblue mb-1">Checkout</h1>
-                <p className="text-sm text-gray-400 mb-6">
+                <h1 className="text-heading text-primaryDark mb-1">Checkout</h1>
+                <p className="text-sm text-textSecondary mb-6">
                     Review your order before placing it.
                 </p>
 
                 {loading && (
                     <div className="flex flex-col gap-4">
                         {[1, 2].map((i) => (
-                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
-                                <div className="h-4 bg-gray-100 rounded w-1/3 mb-4 animate-pulse" />
-                                <div className="h-16 bg-gray-100 rounded animate-pulse" />
+                            <div key={i} className="bg-surface border border-line rounded-xl p-5">
+                                <div className="h-4 bg-line/20 rounded w-1/3 mb-4 animate-pulse" />
+                                <div className="h-16 bg-line/20 rounded animate-pulse" />
                             </div>
                         ))}
                     </div>
                 )}
 
                 {!loading && error && (
-                    <p className="text-red-500 text-sm">Error: {error}</p>
+                    <p className="text-danger text-sm">Error: {error}</p>
                 )}
 
                 {!loading && !error && items.length === 0 && (
-                    <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
-                        <p className="text-gray-400 text-sm mb-3">Your cart is empty.</p>
-                        <Link to="/explore" className="text-pastel-blue text-sm hover:underline">
+                    <div className="bg-surface border border-line rounded-xl p-10 text-center">
+                        <p className="text-textSecondary text-sm mb-3">Your cart is empty.</p>
+                        <Link to="/explore" className="text-primary text-sm hover:underline">
                             Browse products →
                         </Link>
                     </div>
@@ -102,12 +102,12 @@ export default function Checkout() {
                     <>
                         {/* Error dari server */}
                         {serverError && (
-                            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
-                                <p className="text-red-600 text-sm font-semibold">{serverError}</p>
+                            <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 mb-4">
+                                <p className="text-danger text-sm font-semibold">{serverError}</p>
                                 {itemErrors.length > 0 && (
                                     <ul className="mt-2 flex flex-col gap-1">
                                         {itemErrors.map((msg, i) => (
-                                            <li key={i} className="text-red-500 text-xs">• {msg}</li>
+                                            <li key={i} className="text-danger text-xs">• {msg}</li>
                                         ))}
                                     </ul>
                                 )}
@@ -116,8 +116,8 @@ export default function Checkout() {
 
                         {/* Info pemecahan pesanan */}
                         {sellerGroups.length > 1 && (
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4">
-                                <p className="text-xs text-blue-600">
+                            <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mb-4">
+                                <p className="text-xs text-primaryDark">
                                     Your cart contains items from {sellerGroups.length} sellers.
                                     It will be split into {sellerGroups.length} separate orders.
                                 </p>
@@ -134,21 +134,21 @@ export default function Checkout() {
                                 return (
                                     <div
                                         key={sellerName}
-                                        className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                                        className="bg-surface border border-line rounded-xl overflow-hidden"
                                     >
                                         {/* Header seller */}
-                                        <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                                            <p className="text-sm font-semibold text-darkblue">{sellerName}</p>
-                                            <span className="text-xs text-gray-400">
+                                        <div className="px-5 py-3 bg-background border-b border-line flex items-center justify-between">
+                                            <p className="text-sm font-semibold text-textPrimary">{sellerName}</p>
+                                            <span className="text-xs text-textSecondary">
                                                 {sellerItems.length} item{sellerItems.length !== 1 ? "s" : ""}
                                             </span>
                                         </div>
 
                                         {/* Items */}
-                                        <div className="divide-y divide-gray-50">
+                                        <div className="divide-y divide-line">
                                             {sellerItems.map((item) => (
                                                 <div key={item.id} className="flex gap-3 px-5 py-3">
-                                                    <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                                    <div className="w-14 h-14 rounded-lg bg-line/30 overflow-hidden shrink-0">
                                                         {item.product.thumbnail ? (
                                                             <img
                                                                 src={item.product.thumbnail}
@@ -156,22 +156,22 @@ export default function Checkout() {
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
+                                                            <div className="w-full h-full flex items-center justify-center text-textSecondary text-[10px]">
                                                                 No img
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-darkblue truncate">
+                                                        <p className="text-sm font-medium text-textPrimary truncate">
                                                             {item.product.title}
                                                         </p>
-                                                        <p className="text-xs text-gray-400 mt-0.5">
+                                                        <p className="text-xs text-textSecondary mt-0.5">
                                                             {formatPrice(item.product.price)} × {item.quantity}
                                                         </p>
                                                     </div>
 
-                                                    <p className="text-sm font-semibold text-darkblue shrink-0">
+                                                    <p className="text-sm font-semibold text-textPrimary shrink-0">
                                                         {formatPrice(item.subtotal)}
                                                     </p>
                                                 </div>
@@ -179,9 +179,9 @@ export default function Checkout() {
                                         </div>
 
                                         {/* Subtotal per seller */}
-                                        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                                            <span className="text-xs text-gray-400">Subtotal</span>
-                                            <span className="text-sm font-bold text-darkblue">
+                                        <div className="px-5 py-3 bg-background border-t border-line flex items-center justify-between">
+                                            <span className="text-xs text-textSecondary">Subtotal</span>
+                                            <span className="text-sm font-bold text-tex">
                                                 {formatPrice(sellerSubtotal)}
                                             </span>
                                         </div>
@@ -191,9 +191,9 @@ export default function Checkout() {
                         </div>
 
                         {/* Metode pembayaran */}
-                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
-                            <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
-                                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        <div className="bg-surface border border-line rounded-xl overflow-hidden mb-6">
+                            <div className="px-5 py-3 bg-background border-b border-line">
+                                <h2 className="text-xs font-bold text-textSecondary uppercase tracking-widest">
                                     Payment Method
                                 </h2>
                             </div>
@@ -210,22 +210,22 @@ export default function Checkout() {
                                         onClick={() => setPaymentMethod(method.value)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition ${
                                             paymentMethod === method.value
-                                                ? "border-pastel-blue bg-blue-50"
-                                                : "border-gray-200 hover:bg-gray-50"
+                                                ? "border-primary bg-primary/10"
+                                                : "border-line hover:bg-background"
                                         }`}
                                     >
                                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                                             paymentMethod === method.value
-                                                ? "border-pastel-blue"
-                                                : "border-gray-300"
+                                                ? "border-primary"
+                                                : "border-line"
                                         }`}>
                                             {paymentMethod === method.value && (
-                                                <div className="w-2 h-2 rounded-full bg-pastel-blue" />
+                                                <div className="w-2 h-2 rounded-full bg-primary" />
                                             )}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-medium text-darkblue">{method.label}</p>
-                                            <p className="text-xs text-gray-400">{method.desc}</p>
+                                            <p className="text-sm font-medium text-primaryDark">{method.label}</p>
+                                            <p className="text-xs text-textSecondary">{method.desc}</p>
                                         </div>
                                     </button>
                                 ))}
@@ -237,19 +237,19 @@ export default function Checkout() {
 
             {/* Bottom bar */}
             {!loading && items.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-5 py-4 shadow-lg">
+                <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-line px-5 py-4 shadow-lg">
                     <div className="max-w-3xl mx-auto">
                         <div className="flex items-center justify-between mb-3">
                             <div>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-textSecondary">
                                     {items.length} item{items.length !== 1 ? "s" : ""}
                                     {sellerGroups.length > 1 && ` · ${sellerGroups.length} orders`}
                                 </p>
-                                <p className="text-lg font-bold text-darkblue">{formatPrice(total)}</p>
+                                <p className="text-lg font-bold text-primaryDark">{formatPrice(total)}</p>
                             </div>
                             <Link
                                 to="/cart"
-                                className="text-sm text-gray-400 hover:text-darkblue transition"
+                                className="text-sm text-textSecondary hover:text-primaryDark transition"
                             >
                                 ← Back to cart
                             </Link>
@@ -258,7 +258,7 @@ export default function Checkout() {
                         <button
                             onClick={handleSubmit}
                             disabled={submitting}
-                            className="w-full bg-pastel-blue hover:bg-pastel-cyan text-white font-semibold rounded-full py-3 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-primary hover:bg-primaryHover text-white font-semibold rounded-full py-3 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {submitting ? "Processing..." : "Place Order"}
                         </button>

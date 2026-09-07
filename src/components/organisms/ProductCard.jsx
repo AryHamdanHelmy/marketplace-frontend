@@ -53,35 +53,35 @@ export default function ProductCard({ product, onClick }) {
 
       <div className="px-1 flex flex-col flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-bold text-black text-sm md:text-base line-clamp-2">
+          <h3 className="text-textPrimary text-label md:text-label line-clamp-2">
             {title}
           </h3>
           {rating_label && (
-            <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full bg-pastel-blue text-pastel-green">
+            <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full bg-success text-white">
               {rating_label}
             </span>
           )}
         </div>
 
         {category && (
-          <p className="text-xs text-emerald-700 mt-0.5">{category.name}</p>
+          <p className="text-xs text-textSecondary mt-0.5">{category.name}</p>
         )}
 
-        <p className="text-xs text-description leading-snug mt-1 line-clamp-2">
+        <p className="text-xs text-textPrimary leading-snug mt-1 line-clamp-2">
           {description}
         </p>
 
-        <p className="text-sm font-semibold text-black mt-1.5">
+        <p className="text-sm font-semibold text-textPrimary mt-1.5">
           {formattedPrice}
         </p>
 
         <button
           onClick={handleAddToCart}
           disabled={adding}
-          className={`mt-auto pt-2 w-full text-xs font-semibold rounded-lg py-1.5 transition disabled:opacity-60 ${
+          className={`mt-2 pt-auto w-full text-xs font-semibold rounded-lg py-1.5 transition disabled:opacity-60 ${
             added
-              ? "bg-emerald-600 text-white"
-              : "bg-pastel-blue hover:bg-pastel-cyan text-white"
+              ? "bg-success text-white"
+              : "bg-primary hover:bg-success text-white"
           }`}
         >
           {added ? "Added ✓" : adding ? "Adding..." : "Add to Cart"}

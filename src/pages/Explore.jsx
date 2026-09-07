@@ -33,17 +33,17 @@ export default function Explore() {
   };
 
   return (
-    <div className="min-h-screen bg-hitam text-darkblue pt-24 px-5 pb-12 md:px-25">
+    <div className="min-h-screen bg-hitam text-textPrimary pt-24 px-5 pb-12 md:px-25">
       <h1 className="text-2xl font-semibold mb-2">
         {search ? `Results for "${search}"` : "Explore Products"}
       </h1>
 
       {!loading && !error && meta && (
-        <p className="text-sm text-gray-400 mb-6">{meta.total} products found</p>
+        <p className="text-sm text-textSecondary mb-6">{meta.total} products found</p>
       )}
 
       {loading && products.length === 0 && (
-        <p className="text-gray-400 mt-6">Loading products...</p>
+        <p className="text-textSecondary mt-6">Loading products...</p>
       )}
 
       {!loading && error && (
@@ -51,7 +51,7 @@ export default function Explore() {
       )}
 
       {!loading && !error && products.length === 0 && (
-        <p className="text-gray-400 mt-6">
+        <p className="text-textSecondary mt-6">
           No products found{search ? ` for "${search}"` : ""}.
         </p>
       )}
@@ -73,7 +73,7 @@ export default function Explore() {
           </div>
 
           {meta && meta.last_page > 1 && (
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-8 text-sm text-black">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-8 text-sm text-textPrimary">
               <p className="text-center md:text-left">
                 Page {meta.current_page} of {meta.last_page}
               </p>
@@ -82,7 +82,7 @@ export default function Explore() {
                 <button
                   onClick={() => goToPage(meta.current_page - 1)}
                   disabled={meta.current_page <= 1 || loading}
-                  className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/35 hover:bg-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   ← Prev
                 </button>
@@ -124,7 +124,7 @@ function PageNumbers({ meta, onGoToPage, disabled }) {
           className={`w-8 h-8 rounded-lg text-sm transition disabled:opacity-40 disabled:cursor-not-allowed ${
             p === current_page
               ? "bg-indigo-600 text-white"
-              : "bg-black/5 border border-black/10 hover:bg-black/10 text-black"
+              : "bg-black/5 border border-black/10 hover:bg-black/10 text-textPrimary"
           }`}
         >
           {p}

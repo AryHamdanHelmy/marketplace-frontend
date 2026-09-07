@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import { SellerNavProvider } from "./context/SellerNavContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Hero from "./components/SectionHero";
@@ -42,7 +43,8 @@ function Home() {
 
 export default function App() {
   return (
-    <div className="bg-background font-sans">
+    <SellerNavProvider>
+    <div className="bg-background font-sans pb-16 md:pb-0">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -149,5 +151,6 @@ export default function App() {
       </Routes>
       <Footer />
     </div>
+    </SellerNavProvider>
   );
 }

@@ -19,8 +19,8 @@ export default function Card({
                 />
             </div>
             <div className="px-1">
-                <h3 className="font-bold text-darkblue text-sm md:text-base">{title}</h3>
-                <p className="text-xs text-pastelgreen leading-snug mt-1 md:text-sm">{description}</p>
+                <h3 className="font-bold text-textPrimary text-sm md:text-base">{title}</h3>
+                <p className="text-xs text-textSecondary leading-snug mt-1 md:text-sm">{description}</p>
             </div>
 
         </div>
