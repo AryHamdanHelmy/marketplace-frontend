@@ -88,14 +88,14 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-hitam pt-10 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white border-2 rounded-2xl p-8">
-        <h2 className="text-2xl font-bold text-darkblue mb-6 text-center">
+      <div className="w-full max-w-sm bg-white border border-line rounded-2xl p-8">
+        <h2 className="text-2xl font-bold text-textPrimary mb-6 text-center">
           Register
         </h2>
 
         {prefilledEmail && (
-          <p className="text-sm text-darkblue mb-4 text-center">
-            The email <span className="text-emerald-800 font-bold">{prefilledEmail}</span> isn't
+          <p className="text-label text-textPrimary mb-4 text-center">
+            The email <span className="text-primaryDark text-label">{prefilledEmail}</span> isn't
             registered yet. Fill in the details below to create a new account.
           </p>
         )}
@@ -110,10 +110,12 @@ export default function Register() {
           message={success ? "Register done redirection..." : ""}
         />
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
           <FormField
             label="Name"
             name="name"
+            placeholder="Your name"
+            type="text"
             value={form.name}
             onChange={handleChange}
             error={errors.name}
@@ -133,6 +135,7 @@ export default function Register() {
           <FormField
             label="Password"
             name="password"
+            placeholder="Enter password"
             type="password"
             value={form.password}
             onChange={handleChange}
@@ -143,6 +146,7 @@ export default function Register() {
           <FormField
             label="Password Confirmation"
             name="password_confirmation"
+            placeholder="Re-enter password"
             type="password"
             value={form.password_confirmation}
             onChange={handleChange}
@@ -151,17 +155,17 @@ export default function Register() {
           />
 
           <div>
-            <label className="block text-sm text-black mb-2">
+            <label className="block text-title text-textPrimary mb-2">
               Register as
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleRoleSelect("buyer")}
-                className={`rounded-lg py-2 text-sm font-semibold transition border ${
+                className={`rounded-lg py-2 text-label transition border ${
                   form.role === "buyer"
-                    ? "bg-pastel-blue border-pastel-blue text-white"
-                    : "bg-black/10 border-black/10 text-black hover:bg-black/20"
+                    ? "bg-primary border-line text-white"
+                    : "bg-primary/10 border-line text-black hover:bg-primary/20"
                 }`}
               >
                 Buyer
@@ -169,10 +173,10 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => handleRoleSelect("seller")}
-                className={`rounded-lg py-2 text-sm font-semibold transition border ${
+                className={`rounded-lg py-2 text-label transition border ${
                   form.role === "seller"
-                    ? "bg-pastel-blue border-pastel-blue text-white"
-                    : "bg-black/10 border-black/10 text-black hover:bg-black/20"
+                    ? "bg-primary border-line text-white"
+                    : "bg-primary/10 border-line text-black hover:bg-primary/20"
                 }`}
               >
                 Seller
@@ -185,9 +189,9 @@ export default function Register() {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-black mt-4">
+        <p className="text-center text-label text-black mt-4">
           Have an Account?{" "}
-          <Link to="/login" className="text-emerald-800 hover:underline font-bold">
+          <Link to="/login" className="text-primaryDark hover:underline font-bold">
             Login Here
           </Link>
         </p>

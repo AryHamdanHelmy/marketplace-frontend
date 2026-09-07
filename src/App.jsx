@@ -42,7 +42,7 @@ function Home() {
 
 export default function App() {
   return (
-    <div className="bg-white font-sans">
+    <div className="bg-background font-sans">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

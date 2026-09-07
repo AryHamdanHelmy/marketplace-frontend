@@ -5,6 +5,7 @@ import { apiRequest } from "../api/Client";
 import EmailStep from "../components/organisms/EmailStep";
 import PasswordStep from "../components/organisms/PasswordStep";
 import Alert from "../components/molecules/Alert";
+import logoFull from "../assets/rapaku.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -61,8 +62,13 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white border-2 rounded-lg p-8">
-        <h2 className="text-xl font-bold text-darkblue mb-6 text-center">
+      <div className="w-full max-w-sm bg-white border border-line rounded-lg p-8">
+        <div className="flex items-center justify-center mb-4">
+          <img
+            src={logoFull}
+            alt="Logo" className="w-auto h-10"/>
+        </div>
+        <h2 className="text-heading text-textPrimary mb-6 text-center">
           {step === "email" ? "Sign in or create account" : "Enter your password"}
         </h2>
         <Alert

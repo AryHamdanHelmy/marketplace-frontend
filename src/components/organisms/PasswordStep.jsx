@@ -31,12 +31,12 @@ export default function PasswordStep({ email, onBack, onSubmit }) {
       {/* Amazon-style: locked email + "Change" link */}
       <div>
         <p className="text-sm text-black font-bold mb-1">Email</p>
-        <div className="flex items-center justify-between rounded-lg outline-1 bg-pastelgreen px-3 py-2">
+        <div className="flex items-center justify-between rounded-md border border-line bg-pastelgreen px-3 py-2">
           <span className="text-black text-xs truncate">{email}</span>
           <button
             type="button"
             onClick={onBack}
-            className="text-emerald-700 hover:underline text-xs shrink-0 ml-2"
+            className="text-success hover:underline text-label shrink-0 ml-2"
           >
             Change
           </button>
@@ -47,6 +47,7 @@ export default function PasswordStep({ email, onBack, onSubmit }) {
         label="Enter password"
         name="password"
         type="password"
+        placeholder="Enter password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         error={error}

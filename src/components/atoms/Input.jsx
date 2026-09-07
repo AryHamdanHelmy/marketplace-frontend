@@ -22,8 +22,8 @@ export default function Input({
         autoFocus={autoFocus}
         disabled={disabled}
         autoComplete={autoComplete}
-        className={`w-full rounded-md bg-pastelblue/10 text-base text-black px-3 py-2 outline-1 focus:ring-2 transition disabled:opacity-60 ${
-          hasError ? "ring-1 ring-red-500 focus:ring-red-500" : "focus:ring-pastel-blue"
+        className={`w-full rounded-md bg-primary/10 text-sm text-textSecondary px-3 py-2 border border-line focus:ring-2 focus:ring-primary transition disabled:opacity-60 ${
+          hasError ? "ring-1 ring-red-500 focus:ring-red-500" : "focus:ring-primary"
         } ${rightSlot ? "pr-16" : ""}`}
       />
       {rightSlot && (

@@ -31,9 +31,10 @@ export default function EmailStep({ onContinue, initialEmail = "" }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <FormField
         label="Enter your email here"
+        placeholder= "Your email"
         name="email"
         type="email"
         value={email}
