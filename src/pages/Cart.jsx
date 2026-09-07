@@ -90,7 +90,7 @@ export default function Cart() {
     };
 
     return (
-        <div className="min-h-screen bg-background text-textPrimary pb-28">
+        <div className="min-h-screen bg-background text-textPrimary pb-44 md:pb-28">
 
             {/* Header sticky */}
             <div className="sticky top-0 z-10 bg-surface border-b border-line px-5 py-4 flex items-center gap-4">
@@ -246,7 +246,7 @@ export default function Cart() {
 
             {/* Sticky bottom bar */}
             {items.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-line px-5 py-4">
+                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-line px-5 py-4">
                     <div className="md:max-w-2xl md:mx-auto">
                         <div className="flex items-center justify-between mb-3">
                             {/* Select all */}
