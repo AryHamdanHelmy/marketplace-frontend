@@ -66,7 +66,7 @@ export default function Checkout() {
     };
 
     return (
-        <div className="min-h-screen bg-background pt-24 px-5 pb-32 md:px-8">
+        <div className="min-h-screen bg-background pt-24 px-5 pb-52 md:pb-40 md:px-8">
             <div className="max-w-3xl mx-auto">
 
                 <h1 className="text-heading text-primaryDark mb-1">Checkout</h1>
@@ -181,7 +181,7 @@ export default function Checkout() {
                                         {/* Subtotal per seller */}
                                         <div className="px-5 py-3 bg-background border-t border-line flex items-center justify-between">
                                             <span className="text-xs text-textSecondary">Subtotal</span>
-                                            <span className="text-sm font-bold text-tex">
+                                            <span className="text-sm font-bold text-textPrimary">
                                                 {formatPrice(sellerSubtotal)}
                                             </span>
                                         </div>
@@ -237,7 +237,7 @@ export default function Checkout() {
 
             {/* Bottom bar */}
             {!loading && items.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-line px-5 py-4 shadow-lg">
+                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-5 py-4 shadow-lg">
                     <div className="max-w-3xl mx-auto">
                         <div className="flex items-center justify-between mb-3">
                             <div>
