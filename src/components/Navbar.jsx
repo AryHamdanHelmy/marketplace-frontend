@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import logoImage from "../assets/logo.png";
+import logoImage from "../assets/rapaku.png";
 import { Link } from "react-router-dom";
 import LogoutButton from "./LogoutButton";
 import { useAuth } from "../context/AuthContext";
-import { Search, User, ShoppingCart, ChevronDown, Menu, X } from "lucide-react";
+import { Search, User, ShoppingCart, ChevronDown, Menu, X, Store } from "lucide-react";
 import {
     InputGroup,
     InputGroupAddon,
@@ -58,7 +58,7 @@ export default function Navbar() {
                     onClick={() => setMenuOpen(false)}
                     className="text-xl font-bold text-darkblue shrink-0 tracking-tight"
                 >
-                    DibiTech
+                    <img src={logoImage} alt="Logo" className="w-auto h-6" />
                 </Link>
 
                 {/* Search bar — desktop */}
@@ -125,19 +125,19 @@ export default function Navbar() {
                     {isAdmin && (
                         <><Link
                             to="/users"
-                            className={`text-sm font-medium transition ${isAdminPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
+                            className={`text-sm font-medium transition ${isAdminPage ? "text-textPrimary font-semibold" : "text-gray-600 hover:text-darkblue"}`}
                         >
                             Manage Users
                         </Link>
                         <Link
                             to="/admin/categories"
-                            className={`text-sm font-medium transition ${isAdminPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
+                            className={`text-sm font-medium transition ${isAdminPage ? "text-textPrimary font-semibold" : "text-gray-600 hover:text-darkblue"}`}
                         >
                             Categories
                         </Link>
                         <Link
                             to="/admin/products"
-                            className={`text-sm font-medium transition ${isAdminPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
+                            className={`text-sm font-medium transition ${isAdminPage ? "text-textPrimary font-semibold" : "text-gray-600 hover:text-darkblue"}`}
                         >
                             Products
                         </Link>
@@ -148,7 +148,7 @@ export default function Navbar() {
                     {isSeller && (
                         <Link
                             to="/seller/dashboard"
-                            className={`text-sm font-medium transition ${isSellerPage ? "text-pastel-blue font-semibold" : "text-gray-600 hover:text-darkblue"}`}
+                            className={`text-sm font-medium transition ${isSellerPage ? "text-textPrimary font-semibold" : "text-gray-600 hover:text-darkblue"}`}
                         >
                             Seller Center
                         </Link>
@@ -159,15 +159,15 @@ export default function Navbar() {
                         <div className="relative group">
                             <button
                                 type="button"
-                                className="flex items-center gap-1.5 text-gray-600 hover:text-darkblue transition"
+                                className="flex items-center gap-1.5 text-gray-600 hover:text-primaryDark transition"
                             >
-                                <div className="w-8 h-8 rounded-full bg-darkblue/10 flex items-center justify-center">
-                                    <User size={16} className="text-darkblue" />
+                                <div className="w-8 h-8 rounded-full bg-background text-primaryDark/10 flex items-center justify-center">
+                                    <User size={16} className="text-primaryDark"/>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm text-gray-400 leading-none">Account</p>
+                                    <p className="text-sm text-textSecondary leading-none">Account</p>
                                 </div>
-                                <ChevronDown size={14} className="text-gray-400" />
+                                <ChevronDown size={14} className="text-textSecondary"/>
                             </button>
 
                             {/* Dropdown */}
@@ -221,7 +221,7 @@ export default function Navbar() {
                     ) : (
                         <Link
                             to="/login"
-                            className="flex flex-col items-center text-gray-500 hover:text-darkblue transition"
+                            className="flex flex-col items-center text-textPrimary hover:text-textPrimary transition"
                         >
                             <User size={20} />
                             <span className="text-[10px] mt-0.5">Sign In</span>
@@ -255,9 +255,9 @@ export default function Navbar() {
                                 <Link
                                     to="/explore"
                                     onClick={() => setMenuOpen(false)}
-                                    className="py-2.5 text-sm text-gray-700 hover:text-darkblue font-medium border-b border-gray-50 transition"
+                                    className="py-2.5 text-sm text-gray-700 hover:text-darkblue font-medium border-b border-gray-50 transition flex items-center gap-2"
                                 >
-                                    Explore Products
+                                    <Search size={16} /> Explore Products
                                 </Link>
                                 
                             </>
@@ -269,7 +269,7 @@ export default function Navbar() {
                                 onClick={() => setMenuOpen(false)}
                                 className={`py-2.5 text-sm font-medium border-b border-gray-50 transition ${isAdminPage ? "text-pastel-blue" : "text-gray-700 hover:text-darkblue"}`}
                             >
-                                Manage Users
+                                <ShoppingCart size={16} />Manage Users
                             </Link>
                             <Link
                                 to="/admin/products"
@@ -291,9 +291,9 @@ export default function Navbar() {
                             <Link
                                 to="/seller/dashboard"
                                 onClick={() => setMenuOpen(false)}
-                                className={`py-2.5 text-sm font-medium border-b border-gray-50 transition ${isSellerPage ? "text-pastel-blue" : "text-gray-700 hover:text-darkblue"}`}
+                                className={`py-2.5 text-sm font-medium border-b flex item-center gap-2 border-gray-50 transition ${isSellerPage ? "text-pastel-blue" : "text-gray-700 hover:text-darkblue"}`}
                             >
-                                Seller Center
+                                <Store size={16} /> Seller Center
                             </Link>
                         )}
                     </div>
@@ -313,14 +313,14 @@ export default function Navbar() {
                                 </div>
                                 <LogoutButton
                                     onClick={() => setMenuOpen(false)}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-darkblue hover:bg-darkblue/90 transition"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary/90 transition"
                                 />
                             </div>
                         ) : (
                             <Link
                                 to="/login"
                                 onClick={() => setMenuOpen(false)}
-                                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold text-white bg-darkblue hover:bg-darkblue/90 transition"
+                                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary/90 transition"
                             >
                                 Sign In
                             </Link>

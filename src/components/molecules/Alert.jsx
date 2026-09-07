@@ -18,11 +18,11 @@ export default function Alert({ type = "error", message, onClose }) {
 
   const styles = isError
     ? {
-        wrapper: "bg-red-500/10 border border-red-500/20 text-red-400",
+        wrapper: "bg-danger/10 border border-danger/20 text-red-400",
         icon: "text-red-400",
       }
     : {
-        wrapper: "bg-green-500/10 border border-green-500/20 text-green-400",
+        wrapper: "bg-success/10 border border-success/20 text-green-400",
         icon: "text-green-400",
       };
 
