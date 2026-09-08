@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/Client";
+import { useCart } from "../../context/CartContext";
 
 export default function ProductCard({ product, onClick }) {
   const { title, description, price, thumbnail, rating_label, category } = product;
+  const { bump } = useCart();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
@@ -24,6 +26,7 @@ export default function ProductCard({ product, onClick }) {
         body: { product_id: product.id, quantity: 1 },
       });
       setAdded(true);
+      bump(); // update jumlah item di cart
       setTimeout(() => setAdded(false), 1500); // balik ke teks normal setelah 1.5 detik
     } catch (err) {
       alert(err.message || "Failed to add product to cart");

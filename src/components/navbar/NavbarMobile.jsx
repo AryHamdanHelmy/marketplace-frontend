@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import { useSellerNav } from "../../context/SellerNavContext";
+import { useCart } from "../../context/CartContext";
 import {
     Home, Compass, ShoppingCart, Receipt,
     Store, User, Users, Package, Search, Menu
@@ -61,6 +62,7 @@ export default function NavbarMobile({
 }) {
     const tabs = buildTabs({ isLoggedIn, isAdmin, isSeller, homePath });
     const sellerNav = useSellerNav();
+    const { count } = useCart();
 
     return (
         <>
@@ -123,7 +125,14 @@ export default function NavbarMobile({
                             >
                                 {({ isActive }) => (
                                     <>
-                                        <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
+                                        <span className="relative">
+                                            <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
+                                            {to === "/cart" && count > 0 && (
+                                                <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                                                    {count > 9 ? "9+" : count}
+                                                </span>
+                                            )}
+                                        </span>
                                         <span className="text-[10px] font-medium leading-none">
                                             {label}
                                         </span>

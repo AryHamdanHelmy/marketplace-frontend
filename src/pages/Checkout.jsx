@@ -1,11 +1,20 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
 import { apiRequest } from "../api/Client";
+import { useCart } from "../context/CartContext";
 
 export default function Checkout() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const cartItemIds = location.state?.cartItemIds || null;
+    useEffect(() => {
+        if (!cartItemIds || cartItemIds.length ===0){
+            navigate("/cart", { replace: true });
+        }
+    }, [cartItemIds, navigate]);
     const { data, loading, error } = useFetch("/cart", []);
+    const { refresh: refreshCartCount } = useCart();
 
     const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
     const [submitting, setSubmitting] = useState(false);
@@ -17,8 +26,11 @@ export default function Checkout() {
     // jadi backend mengenali itu sebagai percobaan yang sama — bukan pesanan baru.
     const [idempotencyKey] = useState(() => crypto.randomUUID());
 
-    const items = data?.data || [];
-    const total = data?.total || 0;
+    const allItems = data?.data || [];
+    const items = cartItemIds 
+        ? allItems.filter(item => cartItemIds.includes(item.id)) 
+        : allItems;
+    const total = items.reduce((sum, item) => sum + Number(item.subtotal), 0);
 
     const formatPrice = (value) =>
         new Intl.NumberFormat("id-ID", {
@@ -50,10 +62,12 @@ export default function Checkout() {
                 body: {
                     idempotency_key: idempotencyKey,
                     payment_method: paymentMethod,
+                    cart_item_ids: cartItemIds,
                 },
             });
 
             const groupId = res.data?.checkout_group_id;
+            refreshCartCount();
             navigate(`/orders/success/${groupId}`);
         } catch (err) {
             // Backend mengirim daftar item bermasalah di field errors

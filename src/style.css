@@ -42,3 +42,22 @@
         display: none;
     }
 }
+
+@keyframes marquee-right {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+.marquee-track {
+    animation: marquee-right 40s linear infinite;
+}
+
+/* Berhenti pas di-hover biar bisa diklik dengan tenang */
+.marquee-viewport:hover .marquee-track {
+    animation-play-state: paused;
+}
+
+/* Hormati setting OS — animasi terus-menerus bisa memicu mual bagi sebagian orang */
+@media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+}

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search, User, ShoppingCart, ChevronDown } from "lucide-react";
+import { useCart } from "../../context/CartContext";
 import logoImage from "../../assets/rapaku.png";
 import LogoutButton from "../LogoutButton";
 import {
@@ -32,6 +33,7 @@ export default function NavbarDesktop({
         { to: "/admin/categories", label: "Categories" },
         { to: "/admin/products",   label: "Products" },
     ];
+    const { count } = useCart();
 
     return (
         <header className="w-full fixed top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -77,9 +79,14 @@ export default function NavbarDesktop({
                             <Link
                                 to="/cart"
                                 aria-label="Cart"
-                                className="text-gray-500 hover:text-darkblue transition"
+                                className="relative text-gray-500 hover:text-darkblue transition"
                             >
                                 <ShoppingCart size={20} />
+                                {count > 0 && (
+                                    <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                                        {count > 9 ? "9+" : count}
+                                    </span>
+                                )}
                             </Link>
                             <Link to="/explore" className={`${linkBase} ${linkIdle}`}>
                                 Explore
