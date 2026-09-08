@@ -31,7 +31,7 @@ export async function apiRequest(endpoint, options = {}) {
     const error = new Error(message);
     error.errors = data.errors;
     error.status = response.status;
-    throw new Error(message);
+    throw error;
   }
 
   return data;

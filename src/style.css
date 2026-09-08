@@ -1,20 +1,57 @@
 @import "tailwindcss";
 
 @theme {
-    --color-primary: #0070ba;
-    --color-primaryDark: #003087;
-    --color-primaryHover: #005ea6;
+    /* Brand — shu (torii vermillion) */
+    --color-primary: #de4b2e;
+    --color-primaryHover: #c23d22;
+    --color-primaryDark: #a33119;
+    --color-primarySoft: #fdeee9;
+
+    /* Brand — ai (indigo), secondary actions and links */
+    --color-accent: #22405c;
+    --color-accentHover: #1a3249;
+    --color-accentSoft: #eaeff5;
+
+    /* Surfaces — washi */
     --color-surface: #ffffff;
-    --color-background: #f7f9fa;
-    --color-line: #D8D8D8;
-    --color-textPrimary: #2c2e2f;
-    --color-textSecondary: #687173;
-    --color-success: #00a67e;
-    --color-danger: #d20000;
+    --color-surfaceAlt: #fbf8f2;
+    --color-background: #f7f2ea;
+    --color-line: #e4dccc;
+    --color-lineStrong: #cfc4ae;
+
+    /* Text — sumi */
+    --color-textPrimary: #171412;
+    --color-textSecondary: #6b6459;
+    --color-textMuted: #948c7e;
+    --color-textOnDark: #f7f2ea;
+
+    /* Neutral ramp — migration target for hardcoded gray-* classes */
+    --color-ink-50: #faf8f4;
+    --color-ink-100: #f1ece2;
+    --color-ink-200: #e4dccc;
+    --color-ink-300: #cfc4ae;
+    --color-ink-400: #a89e8d;
+    --color-ink-500: #7d7466;
+    --color-ink-600: #5c554a;
+    --color-ink-700: #3f3a32;
+    --color-ink-800: #29251f;
+    --color-ink-900: #171412;
+
+    /* Status — danger is deliberately cooler and darker than shu */
+    --color-success: #1d7a5f;
+    --color-successSoft: #e6f4ef;
+    --color-danger: #9e2b25;
+    --color-dangerSoft: #fbeceb;
+    --color-warning: #a56a12;
+    --color-warningSoft: #fbf1de;
+
+    /* Typography */
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
 
     --text-display: 2rem;
-    --text-display--line-height: 1.15;
-    --text-display--letter-spacing: -0.02em;
+    --text-display--line-height: 1.12;
+    --text-display--letter-spacing: -0.025em;
     --text-display--font-weight: 700;
 
     --text-heading: 1.375rem;
@@ -32,6 +69,29 @@
     --text-label--font-weight: 700;
 }
 
+@layer base {
+    html {
+        background-color: var(--color-background);
+        color: var(--color-textPrimary);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Prices and quantities line up in listing grids */
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    ::selection {
+        background-color: var(--color-primary);
+        color: #ffffff;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+}
 
 @layer utilities {
     .scrollbar-hide {
@@ -52,12 +112,21 @@
     animation: marquee-right 40s linear infinite;
 }
 
-/* Berhenti pas di-hover biar bisa diklik dengan tenang */
+/* Pause on hover so items stay clickable */
 .marquee-viewport:hover .marquee-track {
     animation-play-state: paused;
 }
 
-/* Hormati setting OS — animasi terus-menerus bisa memicu mual bagi sebagian orang */
+/* Respect the OS setting — continuous motion can trigger nausea */
 @media (prefers-reduced-motion: reduce) {
     .marquee-track { animation: none; }
+}
+
+:root {
+    --tabbar-h: calc(4rem + env(safe-area-inset-bottom));
+}
+
+/* Tab bar cuma ada di mobile */
+@media (min-width: 768px) {
+    :root { --tabbar-h: 0px; }
 }

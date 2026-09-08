@@ -19,13 +19,13 @@ export default function SellerSidebar() {
 
     const navContent = (
         <>
-            <div className="px-5 mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-pastel-blue flex items-center justify-center shrink-0">
+            <div className="px-5 mb-5 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary md:mt-5 flex items-center justify-center shrink-0">
                     <Store size={20} className="text-white" />
                 </div>
-                <div>
+                <div className="flex flex-col gap-0.5 mt-5">
                     <p className="text-sm font-bold text-darkblue leading-tight">Seller Center</p>
-                    <p className="text-xs text-black/40">DibiTech</p>
+                    <p className="text-xs text-black/40">Rapaku</p>
                 </div>
             </div>
 
@@ -36,7 +36,7 @@ export default function SellerSidebar() {
                         to={to}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
                             isActive(to)
-                                ? "text-pastel-blue font-semibold bg-pastel-blue/10 border-r-2 border-pastel-blue"
+                                ? "text-pastel-blue font-semibold bg-pastel-blue/10 border-r-2 border-primary"
                                 : "text-black/60 hover:bg-black/5"
                         }`}
                     >
@@ -67,7 +67,7 @@ export default function SellerSidebar() {
             </aside>
 
             {/* Sidebar tetap — desktop */}
-            <aside className="hidden md:flex w-60 h-screen fixed left-0 top-16 border-r border-black/10 bg-white flex-col py-6 gap-1 z-30">
+            <aside className="hidden md:flex w-60 h-screen border border-line fixed left-0 top-16 bg-white flex-col py-6 gap-1 z-30">
                 {navContent}
             </aside>
         </>

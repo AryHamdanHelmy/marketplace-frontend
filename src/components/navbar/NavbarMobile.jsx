@@ -1,76 +1,77 @@
-import { Link, NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import {
+    Home, Compass, ShoppingCart, Receipt,
+    Store, User, Users, Package, Search, Menu, X,
+} from "lucide-react";
+import logoImage from "../../assets/rapaku.png";
+import LogoutButton from "../LogoutButton";
 import { useSellerNav } from "../../context/SellerNavContext";
 import { useCart } from "../../context/CartContext";
 import {
-    Home, Compass, ShoppingCart, Receipt,
-    Store, User, Users, Package, Search, Menu
-} from "lucide-react";
-import logoImage from "../../assets/rapaku.png";
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupInput,
+    InputGroup, InputGroupAddon, InputGroupInput,
 } from "../ui/input-group";
 
 // Maks 5 tab — lebih dari itu target sentuhnya kekecilan
 function buildTabs({ isLoggedIn, isAdmin, isSeller, homePath }) {
+    if (!isLoggedIn) {
+        return [
+            { to: "/",        label: "Home",    icon: Home },
+            { to: "/explore", label: "Explore", icon: Compass },
+            { to: "/cart",    label: "Cart",    icon: ShoppingCart },
+            { to: "/login",   label: "Sign In", icon: User },
+        ];
+    }
+
     if (isAdmin) {
         return [
-            { to: "/",            label: "Home",     icon: Home },
-            { to: "/admin/products",   label: "Products", icon: Package },
-            { to: "/admin/categories", label: "Category", icon: Compass },
-            { to: "/users",            label: "Users",    icon: Users },
+            { to: "/",          label: "Home",     icon: Home },
+            { to: "/admin/products", label: "Products", icon: Package },
+            { to: "/users",          label: "Users",    icon: Users },
         ];
     }
 
     if (isSeller) {
         return [
-            { to: "/",           label: "Home",   icon: Home },
-            { to: "/explore",         label: "Explore", icon: Compass },
+            { to: "/",            label: "Home",   icon: Home },
+            { to: "/explore",          label: "Explore", icon: Compass },
             { to: "/seller/dashboard", label: "Seller", icon: Store },
-            { to: "/orders",          label: "Orders", icon: Receipt },
-            { to: "/cart",            label: "Cart",   icon: ShoppingCart },
-        ];
-    }
-
-    if (isLoggedIn) {
-        return [
-            { to: "/",   label: "Home",    icon: Home },
-            { to: "/explore", label: "Explore", icon: Compass },
-            { to: "/cart",    label: "Cart",    icon: ShoppingCart },
-            { to: "/orders",  label: "Orders",  icon: Receipt },
+            { to: "/cart",             label: "Cart",   icon: ShoppingCart },
         ];
     }
 
     return [
-        { to: "/",        label: "Home",    icon: Home },
+        { to: "/",   label: "Home",    icon: Home },
         { to: "/explore", label: "Explore", icon: Compass },
         { to: "/cart",    label: "Cart",    icon: ShoppingCart },
-        { to: "/login",   label: "Sign In", icon: User },
+        { to: "/orders",  label: "Orders",  icon: Receipt },
     ];
 }
 
+const sheetLink =
+    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-textPrimary hover:bg-background transition";
+
 export default function NavbarMobile({
-    searchQuery,
-    setSearchQuery,
-    handleSearchSubmit,
-    isLoggedIn,
-    isAdmin,
-    isSeller,
-    isSellerPage,
-    homePath,
+    searchQuery, setSearchQuery, handleSearchSubmit,
+    isLoggedIn, isAdmin, isSeller, isSellerPage, user, homePath,
 }) {
     const tabs = buildTabs({ isLoggedIn, isAdmin, isSeller, homePath });
     const sellerNav = useSellerNav();
     const { count } = useCart();
+    const { pathname } = useLocation();
+
+    const [accountOpen, setAccountOpen] = useState(false);
+
+    // Tutup sheet tiap pindah halaman
+    useEffect(() => { setAccountOpen(false); }, [pathname]);
 
     return (
         <>
-            {/* Top bar — logo + search */}
-            <header className="fixed top-0 left-0 w-full z-50 bg-white border-b border-gray-200">
+            {/* Top bar */}
+            <header className="fixed top-0 left-0 w-full z-50 bg-white border-b border-line">
                 <div className="flex items-center gap-3 px-4 h-14">
-                    <Link to={"/"} className="shrink-0">
-                        <img src={logoImage} alt="Rapaku" className="w-auto h-7" />
+                    <Link to={homePath} className="shrink-0">
+                        <img src={logoImage} alt="Rapaku" className="w-auto h-6" />
                     </Link>
 
                     <form onSubmit={handleSearchSubmit} className="flex-1 min-w-0">
@@ -81,34 +82,64 @@ export default function NavbarMobile({
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <InputGroupAddon>
-                                <button
-                                    type="submit"
-                                    aria-label="Search"
-                                    className="flex items-center"
-                                >
+                                <button type="submit" aria-label="Search" className="flex items-center">
                                     <Search size={14} />
                                 </button>
                             </InputGroupAddon>
                         </InputGroup>
                     </form>
+
                     {isSellerPage && (
                         <button
                             onClick={sellerNav.toggle}
                             aria-label="Seller menu"
                             aria-expanded={sellerNav.open}
-                            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-darkblue hover:bg-gray-100 transition"
+                            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-darkblue hover:bg-background transition"
                         >
-                            {sellerNav.open ? <Menu size={20} /> : <Menu size={20} />}
+                            {sellerNav.open ? <X size={20} /> : <Menu size={20} />}
                         </button>
                     )}
                 </div>
             </header>
 
+            {/* Account sheet */}
+            {isLoggedIn && accountOpen && (
+                <>
+                    <div
+                        onClick={() => setAccountOpen(false)}
+                        className="fixed inset-0 z-40 bg-black/40"
+                    />
+                    <div className="fixed bottom-(--tabbar-h) left-0 right-0 z-50 bg-surface border-t border-line rounded-t-2xl p-4">
+                        <div className="flex items-center gap-3 pb-3 mb-2 border-b border-line">
+                            <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <User size={20} className="text-primaryDark" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-textPrimary truncate">{user.name}</p>
+                                <p className="text-xs text-textSecondary truncate">{user.email}</p>
+                            </div>
+                        </div>
+
+                        <Link to="/orders" className={sheetLink}>
+                            <Receipt size={18} /> My Orders
+                        </Link>
+                        {isSeller && (
+                            <Link to="/seller/dashboard" className={sheetLink}>
+                                <Store size={18} /> Seller Center
+                            </Link>
+                        )}
+
+                        <LogoutButton
+                            label="Sign Out"
+                            onClick={() => setAccountOpen(false)}
+                            className="w-full mt-2 py-3 rounded-xl text-sm font-semibold text-danger border border-danger/30 hover:bg-danger/10 transition"
+                        />
+                    </div>
+                </>
+            )}
+
             {/* Bottom tab bar */}
-            <nav
-                className="fixed bottom-0 left-0 w-full z-50 bg-white border-t border-gray-200
-                           pb-[env(safe-area-inset-bottom)]"
-            >
+            <nav className="fixed bottom-0 left-0 w-full z-50 bg-white border-t border-line pb-[env(safe-area-inset-bottom)]">
                 <ul className="flex items-stretch h-16">
                     {tabs.map(({ to, label, icon: Icon }) => (
                         <li key={to} className="flex-1">
@@ -117,9 +148,7 @@ export default function NavbarMobile({
                                 end={to === "/"}
                                 className={({ isActive }) =>
                                     `h-full flex flex-col items-center justify-center gap-1 transition ${
-                                        isActive
-                                            ? "text-darkblue"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        isActive ? "text-darkblue" : "text-textSecondary"
                                     }`
                                 }
                             >
@@ -133,14 +162,27 @@ export default function NavbarMobile({
                                                 </span>
                                             )}
                                         </span>
-                                        <span className="text-[10px] font-medium leading-none">
-                                            {label}
-                                        </span>
+                                        <span className="text-[10px] font-medium leading-none">{label}</span>
                                     </>
                                 )}
                             </NavLink>
                         </li>
                     ))}
+
+                    {isLoggedIn && (
+                        <li className="flex-1">
+                            <button
+                                onClick={() => setAccountOpen((prev) => !prev)}
+                                aria-expanded={accountOpen}
+                                className={`w-full h-full flex flex-col items-center justify-center gap-1 transition ${
+                                    accountOpen ? "text-darkblue" : "text-textSecondary"
+                                }`}
+                            >
+                                <User size={20} strokeWidth={accountOpen ? 2.4 : 1.8} />
+                                <span className="text-[10px] font-medium leading-none">Account</span>
+                            </button>
+                        </li>
+                    )}
                 </ul>
             </nav>
         </>

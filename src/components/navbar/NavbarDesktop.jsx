@@ -42,7 +42,7 @@ export default function NavbarDesktop({
             <div className="flex justify-end px-8 py-1 bg-gray-50 text-[11px] text-gray-500 gap-4 border-b border-gray-100">
                 {isSeller && (
                     <Link to="/seller/dashboard" className="hover:text-darkblue transition">
-                        Seller Centre
+                        Seller Center
                     </Link>
                 )}
                 <a href="#" className="hover:text-darkblue transition">Help</a>

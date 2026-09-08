@@ -249,7 +249,7 @@ export default function Cart() {
 
             {/* Sticky bottom bar */}
             {items.length > 0 && (
-                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-line px-5 py-4">
+                <div className="fixed bottom-(--tabbar-h) md:bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-line px-5 py-4">
                     <div className="md:max-w-2xl md:mx-auto">
                         <div className="flex items-center justify-between mb-3">
                             {/* Select all */}
