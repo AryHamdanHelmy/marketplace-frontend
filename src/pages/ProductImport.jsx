@@ -124,7 +124,7 @@ export default function ProductImport() {
     return (
         <>
             <SellerSidebar />
-            <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:pl-[280px] md:pr-10">
+            <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:pl-70 md:pr-10">
                 <div className="max-w-4xl mx-auto">
 
                     <h1 className="text-2xl font-bold text-textPrimary mb-1">Mass Upload</h1>
@@ -451,7 +451,7 @@ export default function ProductImport() {
                                                         <td className="px-5 py-3 text-gray-500 whitespace-nowrap">
                                                             {formatDate(item.created_at)}
                                                         </td>
-                                                        <td className="px-5 py-3 text-textPrimary truncate max-w-[180px]">
+                                                        <td className="px-5 py-3 text-textPrimary truncate max-w-45">
                                                             {item.file_name}
                                                         </td>
                                                         <td className="px-5 py-3 text-gray-500">
