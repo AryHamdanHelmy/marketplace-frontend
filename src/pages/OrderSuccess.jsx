@@ -17,20 +17,20 @@ export default function OrderSuccess() {
         }).format(value ?? 0);
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:px-8">
+        <div className="min-h-screen bg-background pt-24 px-5 pb-12 md:px-8">
             <div className="max-w-3xl mx-auto">
 
                 {loading && (
-                    <div className="bg-white border border-gray-200 rounded-xl p-10">
-                        <div className="h-6 bg-gray-100 rounded w-1/3 mx-auto mb-4 animate-pulse" />
-                        <div className="h-24 bg-gray-100 rounded animate-pulse" />
+                    <div className="bg-white border border-line rounded-xl p-10">
+                        <div className="h-6 bg-surface rounded w-1/3 mx-auto mb-4 animate-pulse" />
+                        <div className="h-24 bg-surface rounded animate-pulse" />
                     </div>
                 )}
 
                 {!loading && error && (
-                    <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
-                        <p className="text-red-500 text-sm mb-3">Error: {error}</p>
-                        <Link to="/orders" className="text-pastel-blue text-sm hover:underline">
+                    <div className="bg-white border border-line rounded-xl p-10 text-center">
+                        <p className="text-danger text-sm mb-3">Error: {error}</p>
+                        <Link to="/orders" className="text-textPrimary text-sm hover:underline">
                             View my orders →
                         </Link>
                     </div>
@@ -39,11 +39,11 @@ export default function OrderSuccess() {
                 {!loading && !error && order && (
                     <>
                         {/* Success header */}
-                        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center mb-6">
-                            <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                                <CheckCircle size={28} className="text-emerald-500" />
+                        <div className="bg-white border border-line rounded-xl p-8 text-center mb-6">
+                            <div className="w-14 h-14 rounded-full bg-surface flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle size={28} className="text-success" />
                             </div>
-                            <h1 className="text-xl font-bold text-darkblue mb-1">
+                            <h1 className="text-xl font-bold text-textPrimary mb-1">
                                 Order Placed Successfully
                             </h1>
                             <p className="text-sm text-gray-400 mb-4">
@@ -51,7 +51,7 @@ export default function OrderSuccess() {
                                     ? `Your order was split into ${transactions.length} separate orders, one per seller.`
                                     : "Your order has been received and is awaiting payment."}
                             </p>
-                            <p className="text-2xl font-bold text-darkblue">
+                            <p className="text-2xl font-bold text-textPrimary">
                                 {formatPrice(order.grand_total)}
                             </p>
                         </div>
@@ -61,12 +61,12 @@ export default function OrderSuccess() {
                             {transactions.map((trx) => (
                                 <div
                                     key={trx.id}
-                                    className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                                    className="bg-white border border-line rounded-xl overflow-hidden"
                                 >
                                     {/* Header */}
-                                    <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
+                                    <div className="px-5 py-3 bg-surface border-b border-line flex items-center justify-between gap-3">
                                         <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-darkblue truncate">
+                                            <p className="text-sm font-semibold text-textPrimary truncate">
                                                 {trx.seller_name}
                                             </p>
                                             <p className="text-xs text-gray-400 font-mono mt-0.5">
@@ -96,14 +96,14 @@ export default function OrderSuccess() {
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-darkblue truncate">
+                                                    <p className="text-sm text-textPrimary truncate">
                                                         {item.product_name}
                                                     </p>
                                                     <p className="text-xs text-gray-400 mt-0.5">
                                                         {formatPrice(item.price)} × {item.quantity}
                                                     </p>
                                                 </div>
-                                                <p className="text-sm font-semibold text-darkblue shrink-0">
+                                                <p className="text-sm font-semibold text-textPrimary shrink-0">
                                                     {formatPrice(item.subtotal)}
                                                 </p>
                                             </div>
@@ -111,11 +111,11 @@ export default function OrderSuccess() {
                                     </div>
 
                                     {/* Footer */}
-                                    <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                                        <span className="text-xs text-gray-400 capitalize">
+                                    <div className="px-5 py-3 bg-surface border-t border-line flex items-center justify-between">
+                                        <span className="text-xs text-textSecondary capitalize">
                                             {trx.payment?.method?.replace("_", " ")}
                                         </span>
-                                        <span className="text-sm font-bold text-darkblue">
+                                        <span className="text-sm font-bold text-textPrimary">
                                             {formatPrice(trx.total_amount)}
                                         </span>
                                     </div>
@@ -127,13 +127,13 @@ export default function OrderSuccess() {
                         <div className="flex flex-col md:flex-row gap-3">
                             <Link
                                 to="/orders"
-                                className="flex-1 text-center bg-pastel-blue hover:bg-pastel-cyan text-white font-semibold rounded-full py-3 transition"
+                                className="flex-1 text-center bg-primary hover:bg-primaryHover text-white font-semibold rounded-full py-3 transition"
                             >
                                 View My Orders
                             </Link>
                             <Link
                                 to="/explore"
-                                className="flex-1 text-center border border-gray-200 text-darkblue font-semibold rounded-full py-3 hover:bg-gray-50 transition"
+                                className="flex-1 text-center border border-line text-textPrimary font-semibold rounded-full py-3 hover:bg-surface transition"
                             >
                                 Continue Shopping
                             </Link>

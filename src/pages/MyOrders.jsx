@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
 import { apiRequest } from "../api/Client";
+import { PackageCheck } from "lucide-react";
+
+const CONFIRMATION_WINDOW_DAYS = 7;
 
 const STATUS_TABS = [
     { value: "",          label: "All" },
@@ -13,12 +16,22 @@ const STATUS_TABS = [
 ];
 
 const STATUS_STYLE = {
-    pending:   "bg-amber-100 text-amber-600",
-    paid:      "bg-blue-100 text-blue-600",
-    shipped:   "bg-indigo-100 text-indigo-600",
-    completed: "bg-emerald-100 text-emerald-700",
-    cancelled: "bg-red-100 text-red-500",
+    pending:   "bg-warningSoft text-warning",
+    paid:      "bg-accentSoft text-accent",
+    shipped:   "bg-primarySoft text-primary",
+    completed: "bg-successSoft text-success",
+    cancelled: "bg-ink-100 text-textSecondary",
 };
+
+function daysUntilAutoComplete(shippedAt) {
+    if (!shippedAt) return null;
+
+    const deadline = new Date(shippedAt);
+    deadline.setDate(deadline.getDate() + CONFIRMATION_WINDOW_DAYS);
+
+    const days = Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+}
 
 export default function MyOrders() {
     const [status, setStatus] = useState("");
@@ -76,12 +89,37 @@ export default function MyOrders() {
         }
     };
 
+    // Confirming receipt is what releases the seller's payment, so the wording
+    // says so plainly rather than hiding it behind "complete order".
+    const handleConfirmReceipt = async (orderId) => {
+        if (processingId) return;
+        if (
+            !window.confirm(
+                "Confirm you've received this order? The seller gets paid, and it can't be undone."
+            )
+        ) {
+            return;
+        }
+
+        setProcessingId(orderId);
+        setActionError("");
+
+        try {
+            await apiRequest(`/orders/${orderId}/confirm`, { method: "POST" });
+            refetch();
+        } catch (err) {
+            setActionError(err.message || "Couldn't confirm the order");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:px-8">
+        <div className="min-h-screen bg-background pt-24 px-5 pb-12 md:px-8">
             <div className="max-w-3xl mx-auto">
 
-                <h1 className="text-2xl font-bold text-darkblue mb-1">My Orders</h1>
-                <p className="text-sm text-gray-400 mb-5">
+                <h1 className="text-2xl font-bold text-textPrimary mb-1">My Orders</h1>
+                <p className="text-sm text-textSecondary mb-5">
                     Track and manage your purchases.
                 </p>
 
@@ -93,8 +131,8 @@ export default function MyOrders() {
                             onClick={() => setStatus(tab.value)}
                             className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition ${
                                 status === tab.value
-                                    ? "bg-pastel-blue text-white"
-                                    : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
+                                    ? "bg-primary text-white"
+                                    : "bg-surface border border-line text-textSecondary hover:bg-ink-100"
                             }`}
                         >
                             {tab.label}
@@ -103,7 +141,7 @@ export default function MyOrders() {
                 </div>
 
                 {actionError && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-4">
+                    <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-xl px-4 py-3 mb-4">
                         {actionError}
                     </div>
                 )}
@@ -112,24 +150,23 @@ export default function MyOrders() {
                 {loading && (
                     <div className="flex flex-col gap-4">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5">
-                                <div className="h-4 bg-gray-100 rounded w-1/3 mb-3 animate-pulse" />
-                                <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse" />
+                            <div key={i} className="bg-surface border border-line rounded-xl p-5">
+                                <div className="h-4 bg-ink-100 rounded w-1/3 mb-3 animate-pulse" />
+                                <div className="h-3 bg-ink-100 rounded w-1/2 animate-pulse" />
                             </div>
                         ))}
                     </div>
                 )}
 
                 {!loading && error && (
-                    <p className="text-red-500 text-sm">Error: {error}</p>
+                    <p className="text-danger text-sm">Error: {error}</p>
                 )}
 
                 {/* Empty */}
                 {!loading && !error && orders.length === 0 && (
-                    <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-                        <div className="text-4xl mb-3">📦</div>
-                        <p className="text-gray-400 text-sm mb-3">No orders found.</p>
-                        <Link to="/explore" className="text-pastel-blue text-sm hover:underline">
+                    <div className="bg-surface border border-line rounded-xl p-12 text-center">
+                        <p className="text-textSecondary text-sm mb-3">No orders found.</p>
+                        <Link to="/explore" className="text-primary text-sm font-semibold hover:underline">
                             Start shopping →
                         </Link>
                     </div>
@@ -138,72 +175,101 @@ export default function MyOrders() {
                 {/* Order list */}
                 {!loading && orders.length > 0 && (
                     <div className="flex flex-col gap-4">
-                        {orders.map((order) => (
-                            <div
-                                key={order.id}
-                                className={`bg-white border border-gray-200 rounded-xl overflow-hidden transition-opacity ${
-                                    processingId === order.id ? "opacity-50" : ""
-                                }`}
-                            >
-                                {/* Header */}
-                                <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-darkblue truncate">
-                                            {order.seller_name}
-                                        </p>
-                                        <p className="text-xs text-gray-400 font-mono mt-0.5">
-                                            {order.invoice_number}
-                                        </p>
-                                    </div>
-                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
-                                        STATUS_STYLE[order.status] || "bg-gray-100 text-gray-500"
-                                    }`}>
-                                        {order.status}
-                                    </span>
-                                </div>
+                        {orders.map((order) => {
+                            const daysLeft = daysUntilAutoComplete(order.shipped_at);
+                            const hasFooterAction =
+                                order.status === "pending" ||
+                                order.is_cancellable ||
+                                order.status === "shipped";
 
-                                {/* Body */}
-                                <div className="px-5 py-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs text-gray-400">
-                                            {formatDate(order.created_at)} · {order.item_count} item
-                                            {order.item_count !== 1 ? "s" : ""}
-                                        </span>
-                                        <span className="text-xs text-gray-400 capitalize">
-                                            {order.payment?.method?.replace("_", " ")}
+                            return (
+                                <div
+                                    key={order.id}
+                                    className={`bg-surface border border-line rounded-xl overflow-hidden transition-opacity ${
+                                        processingId === order.id ? "opacity-50" : ""
+                                    }`}
+                                >
+                                    {/* Header */}
+                                    <div className="px-5 py-3 bg-surfaceAlt border-b border-line flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-textPrimary truncate">
+                                                {order.seller_name}
+                                            </p>
+                                            <p className="text-xs text-textSecondary font-mono mt-0.5">
+                                                {order.invoice_number}
+                                            </p>
+                                        </div>
+                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
+                                            STATUS_STYLE[order.status] || "bg-ink-100 text-textSecondary"
+                                        }`}>
+                                            {order.status}
                                         </span>
                                     </div>
 
-                                    <p className="text-lg font-bold text-darkblue">
-                                        {formatPrice(order.total_amount)}
-                                    </p>
-                                </div>
+                                    {/* Body */}
+                                    <div className="px-5 py-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs text-textSecondary">
+                                                {formatDate(order.created_at)} · {order.item_count} item
+                                                {order.item_count !== 1 ? "s" : ""}
+                                            </span>
+                                            <span className="text-xs text-textSecondary capitalize">
+                                                {order.payment?.method?.replace("_", " ")}
+                                            </span>
+                                        </div>
 
-                                {/* Actions */}
-                                {(order.status === "pending" || order.is_cancellable) && (
-                                    <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-end gap-2">
-                                        {order.is_cancellable && (
-                                            <button
-                                                onClick={() => handleCancel(order.id)}
-                                                disabled={processingId === order.id}
-                                                className="px-4 py-2 text-sm font-medium text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40"
-                                            >
-                                                Cancel
-                                            </button>
-                                        )}
-                                        {order.status === "pending" && (
-                                            <button
-                                                onClick={() => handlePay(order.id)}
-                                                disabled={processingId === order.id}
-                                                className="px-5 py-2 text-sm font-semibold text-white bg-pastel-blue hover:bg-pastel-cyan rounded-lg transition disabled:opacity-40"
-                                            >
-                                                {processingId === order.id ? "Processing..." : "Pay Now"}
-                                            </button>
-                                        )}
+                                        <p className="text-lg font-bold text-textPrimary tabular">
+                                            {formatPrice(order.total_amount)}
+                                        </p>
                                     </div>
-                                )}
-                            </div>
-                        ))}
+
+                                    {/* Shipped — nudge toward confirming */}
+                                    {order.status === "shipped" && daysLeft !== null && (
+                                        <p className="px-5 pb-3 text-xs text-textSecondary">
+                                            {daysLeft === 0
+                                                ? "This closes automatically today and the seller gets paid."
+                                                : `If you don't confirm, this closes automatically in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`}
+                                        </p>
+                                    )}
+
+                                    {/* Actions */}
+                                    {hasFooterAction && (
+                                        <div className="px-5 py-3 border-t border-line flex items-center justify-end gap-2">
+                                            {order.is_cancellable && (
+                                                <button
+                                                    onClick={() => handleCancel(order.id)}
+                                                    disabled={processingId === order.id}
+                                                    className="px-4 py-2 text-sm font-medium text-danger hover:bg-dangerSoft rounded-lg transition disabled:opacity-40"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            )}
+
+                                            {order.status === "pending" && (
+                                                <button
+                                                    onClick={() => handlePay(order.id)}
+                                                    disabled={processingId === order.id}
+                                                    className="px-5 py-2 text-sm font-semibold text-white bg-primary hover:bg-primaryHover rounded-lg transition disabled:opacity-40"
+                                                >
+                                                    {processingId === order.id ? "Processing..." : "Pay Now"}
+                                                </button>
+                                            )}
+
+                                            {order.status === "shipped" && (
+                                                <button
+                                                    onClick={() => handleConfirmReceipt(order.id)}
+                                                    disabled={processingId === order.id}
+                                                    className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-primary hover:bg-primaryHover rounded-lg transition disabled:opacity-40"
+                                                >
+                                                    <PackageCheck size={15} />
+                                                    {processingId === order.id ? "Processing..." : "Order received"}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

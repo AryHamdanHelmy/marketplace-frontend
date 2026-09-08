@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-    LayoutDashboard, PlusCircle, Store, ShoppingBag, Upload, X,
+    LayoutDashboard, PlusCircle, Store, ShoppingBag, Upload, X, Settings
 } from "lucide-react";
 import { useSellerNav } from "../../context/SellerNavContext";
 
@@ -9,6 +9,7 @@ const navItems = [
     { label: "Orders",      to: "/seller/orders",          icon: ShoppingBag },
     { label: "Add Product", to: "/seller/products/new",    icon: PlusCircle },
     { label: "Mass Upload", to: "/seller/products/import", icon: Upload },
+    { label: "Shop Settings",to: "/seller/store",        icon: Settings},
 ];
 
 export default function SellerSidebar() {
@@ -34,9 +35,10 @@ export default function SellerSidebar() {
                     <Link
                         key={to}
                         to={to}
+                        onClick={close}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
                             isActive(to)
-                                ? "text-pastel-blue font-semibold bg-pastel-blue/10 border-r-2 border-primary"
+                                ? "text-textPrimary font-semibold bg-surface border-r-2 border-primary"
                                 : "text-black/60 hover:bg-black/5"
                         }`}
                     >

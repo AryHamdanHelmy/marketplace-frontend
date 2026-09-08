@@ -5,8 +5,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     const {isLoggedIn, user, loading} = useAuth();
     if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-hitam">
-        <p className="text-gray-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-textSecondary">Loading...</p>
       </div>
     );
   }
@@ -15,8 +15,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   }
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-hitam">
-        <p className="text-red-400">You don't have access to this page.</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-danger">You don't have access to this page.</p>
       </div>
     );
   }

@@ -127,71 +127,71 @@ export default function ProductImport() {
             <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:pl-[280px] md:pr-10">
                 <div className="max-w-4xl mx-auto">
 
-                    <h1 className="text-2xl font-bold text-darkblue mb-1">Mass Upload</h1>
-                    <p className="text-sm text-gray-400 mb-6">
+                    <h1 className="text-2xl font-bold text-textPrimary mb-1">Mass Upload</h1>
+                    <p className="text-sm text-textSecondary mb-6">
                         Upload multiple products at once using an Excel file.
                     </p>
 
                     {/* Tabs */}
-                    <div className="flex gap-6 border-b border-gray-200 mb-6">
+                    <div className="flex gap-6 border-b border-lineStrong mb-6">
                         <button
                             onClick={() => setTab("template")}
                             className={`pb-3 text-sm font-medium transition relative ${
                                 tab === "template"
-                                    ? "text-pastel-blue"
-                                    : "text-gray-400 hover:text-gray-600"
+                                    ? "text-textPrimary"
+                                    : "text-textSecondary hover:text-textPrimary"
                             }`}
                         >
                             Download Template
                             {tab === "template" && (
-                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-pastel-blue" />
+                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
                             )}
                         </button>
                         <button
                             onClick={() => setTab("upload")}
                             className={`pb-3 text-sm font-medium transition relative ${
                                 tab === "upload"
-                                    ? "text-pastel-blue"
-                                    : "text-gray-400 hover:text-gray-600"
+                                    ? "text-textPrimary"
+                                    : "text-textSecondary hover:text-textPrimary"
                             }`}
                         >
                             Upload File
                             {tab === "upload" && (
-                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-pastel-blue" />
+                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
                             )}
                         </button>
                     </div>
 
                     {serverError && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-4">
+                        <div className="bg-red-50 border border-red-200 text-danger text-sm rounded-xl px-4 py-3 mb-4">
                             {serverError}
                         </div>
                     )}
 
                     {/* --- Tab: Download Template --- */}
                     {tab === "template" && (
-                        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+                        <div className="bg-white border border-lineStrong rounded-xl p-8 text-center">
                             <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                                <FileSpreadsheet size={26} className="text-emerald-500" />
+                                <FileSpreadsheet size={26} className="text-success" />
                             </div>
-                            <h2 className="text-base font-bold text-darkblue mb-2">
+                            <h2 className="text-base font-bold text-textPrimary mb-2">
                                 Download the Excel template
                             </h2>
-                            <p className="text-sm text-gray-400 max-w-md mx-auto mb-6 leading-relaxed">
+                            <p className="text-sm text-textSecondary max-w-md mx-auto mb-6 leading-relaxed">
                                 The template includes a category dropdown so you don't have to type
                                 category names manually. Fill it in, then upload it in the next tab.
                             </p>
 
                             <button
                                 onClick={handleDownloadTemplate}
-                                className="inline-flex items-center gap-2 bg-pastel-blue hover:bg-pastel-cyan text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition"
+                                className="inline-flex items-center gap-2 bg-primary hover:bg-pastel-cyan text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition"
                             >
                                 <Download size={16} />
                                 Download Template
                             </button>
 
                             <div className="mt-8 pt-6 border-t border-gray-100 text-left max-w-md mx-auto">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
+                                <p className="text-xs font-bold text-textSecondary uppercase tracking-wide mb-3">
                                     Notes
                                 </p>
                                 <ul className="text-xs text-gray-500 space-y-2 leading-relaxed">
@@ -209,25 +209,25 @@ export default function ProductImport() {
                         <>
                             {/* Hasil import */}
                             {result && (
-                                <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+                                <div className="bg-white border border-lineStrong rounded-xl p-6 mb-6">
                                     <div className="flex items-start gap-4">
                                         <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                                            <CheckCircle size={20} className="text-emerald-500" />
+                                            <CheckCircle size={20} className="text-success" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-sm font-bold text-darkblue mb-1">
+                                            <h3 className="text-sm font-bold text-textPrimary mb-1">
                                                 {result.success_count} products imported
                                             </h3>
-                                            <p className="text-xs text-gray-400 mb-3">
+                                            <p className="text-xs text-textSecondary mb-3">
                                                 Saved as draft. Add images before publishing them.
                                             </p>
 
                                             {result.failed_count > 0 && (
-                                                <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
-                                                    <p className="text-xs text-amber-700 font-medium mb-1">
+                                                <div className="bg-amber-50 border border-line rounded-lg px-3 py-2 mb-3">
+                                                    <p className="text-xs text-danger font-medium mb-1">
                                                         {result.failed_count} rows were skipped
                                                     </p>
-                                                    <ul className="text-[11px] text-amber-600 space-y-0.5">
+                                                    <ul className="text-[11px] text-danger space-y-0.5">
                                                         {result.errors?.slice(0, 5).map((err, i) => (
                                                             <li key={i}>• {err}</li>
                                                         ))}
@@ -241,14 +241,14 @@ export default function ProductImport() {
                                             <div className="flex gap-2">
                                                 <Link
                                                     to="/seller/dashboard"
-                                                    className="text-xs font-semibold text-pastel-blue hover:underline"
+                                                    className="text-xs font-semibold text-textPrimary hover:underline"
                                                 >
                                                     View products →
                                                 </Link>
-                                                <span className="text-gray-200">|</span>
+                                                <span className="text-textSecondary">|</span>
                                                 <button
                                                     onClick={handleReset}
-                                                    className="text-xs font-semibold text-gray-400 hover:text-darkblue"
+                                                    className="text-xs font-semibold text-textSecondary hover:text-textPrimary"
                                                 >
                                                     Upload another file
                                                 </button>
@@ -272,21 +272,21 @@ export default function ProductImport() {
                                     className={`bg-white border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition ${
                                         dragging
                                             ? "border-pastel-blue bg-blue-50/40"
-                                            : "border-gray-200 hover:border-pastel-blue hover:bg-gray-50"
+                                            : "border-lineStrong hover:border-pastel-blue hover:bg-gray-50"
                                     }`}
                                 >
                                     <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
-                                        <Upload size={24} className="text-gray-400" />
+                                        <Upload size={24} className="text-textSecondary" />
                                     </div>
 
                                     {uploading ? (
                                         <p className="text-sm text-gray-500">Reading file...</p>
                                     ) : (
                                         <>
-                                            <p className="text-sm font-medium text-darkblue mb-1">
+                                            <p className="text-sm font-medium text-textPrimary mb-1">
                                                 Drop your Excel file here, or click to browse
                                             </p>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-xs text-textSecondary">
                                                 Max 3 MB · .xlsx only
                                             </p>
                                         </>
@@ -304,16 +304,16 @@ export default function ProductImport() {
 
                             {/* Pratinjau */}
                             {preview && (
-                                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
+                                <div className="bg-white border border-lineStrong rounded-xl overflow-hidden mb-6">
                                     {/* Ringkasan */}
                                     <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
                                         <div className="flex items-center justify-between gap-3 mb-3">
-                                            <p className="text-sm font-semibold text-darkblue truncate">
+                                            <p className="text-sm font-semibold text-textPrimary truncate">
                                                 {preview.file_name}
                                             </p>
                                             <button
                                                 onClick={handleReset}
-                                                className="text-xs text-gray-400 hover:text-darkblue shrink-0"
+                                                className="text-xs text-textSecondary hover:text-textPrimary shrink-0"
                                             >
                                                 Change file
                                             </button>
@@ -337,7 +337,7 @@ export default function ProductImport() {
                                     {/* Tabel baris */}
                                     <div className="overflow-x-auto max-h-96">
                                         <table className="w-full text-left text-xs">
-                                            <thead className="bg-gray-50 text-gray-400 uppercase tracking-wide border-b border-gray-100 sticky top-0">
+                                            <thead className="bg-gray-50 text-textSecondary uppercase tracking-wide border-b border-gray-100 sticky top-0">
                                                 <tr>
                                                     <th className="px-4 py-2.5 font-semibold w-12">#</th>
                                                     <th className="px-4 py-2.5 font-semibold">Name</th>
@@ -353,8 +353,8 @@ export default function ProductImport() {
                                                         key={row.row}
                                                         className={row.is_valid ? "" : "bg-red-50/50"}
                                                     >
-                                                        <td className="px-4 py-2.5 text-gray-400">{row.row}</td>
-                                                        <td className="px-4 py-2.5 text-darkblue font-medium">
+                                                        <td className="px-4 py-2.5 text-textSecondary">{row.row}</td>
+                                                        <td className="px-4 py-2.5 text-textPrimary font-medium">
                                                             {row.name || <span className="text-gray-300">—</span>}
                                                         </td>
                                                         <td className="px-4 py-2.5 text-gray-500">
@@ -402,7 +402,7 @@ export default function ProductImport() {
                                         <button
                                             onClick={handleConfirmImport}
                                             disabled={saving || preview.valid_count === 0}
-                                            className="bg-pastel-blue hover:bg-pastel-cyan text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                            className="bg-primary hover:bg-pastel-cyan text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                             {saving
                                                 ? "Importing..."
@@ -413,9 +413,9 @@ export default function ProductImport() {
                             )}
 
                             {/* Riwayat */}
-                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-6">
+                            <div className="bg-white border border-lineStrong rounded-xl overflow-hidden mt-6">
                                 <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
-                                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                    <h2 className="text-xs font-bold text-textSecondary uppercase tracking-widest">
                                         Upload History
                                     </h2>
                                 </div>
@@ -429,7 +429,7 @@ export default function ProductImport() {
                                 )}
 
                                 {!loadingHistory && history.length === 0 && (
-                                    <p className="text-gray-400 text-sm p-8 text-center">
+                                    <p className="text-textSecondary text-sm p-8 text-center">
                                         No upload history yet.
                                     </p>
                                 )}
@@ -437,7 +437,7 @@ export default function ProductImport() {
                                 {!loadingHistory && history.length > 0 && (
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-xs">
-                                            <thead className="bg-gray-50 text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                                            <thead className="bg-gray-50 text-textSecondary uppercase tracking-wide border-b border-gray-100">
                                                 <tr>
                                                     <th className="px-5 py-2.5 font-semibold">Date</th>
                                                     <th className="px-5 py-2.5 font-semibold">File</th>
@@ -451,7 +451,7 @@ export default function ProductImport() {
                                                         <td className="px-5 py-3 text-gray-500 whitespace-nowrap">
                                                             {formatDate(item.created_at)}
                                                         </td>
-                                                        <td className="px-5 py-3 text-darkblue truncate max-w-[180px]">
+                                                        <td className="px-5 py-3 text-textPrimary truncate max-w-[180px]">
                                                             {item.file_name}
                                                         </td>
                                                         <td className="px-5 py-3 text-gray-500">

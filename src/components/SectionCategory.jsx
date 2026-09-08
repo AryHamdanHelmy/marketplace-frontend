@@ -31,7 +31,7 @@ export default function Categories() {
                 </div>
 
                 {loading && (
-                    <div className="flex overflow-hidden divide-x divide-line/40">
+                    <div className="flex overflow-hidden divide-x divide-line/20">
                         {[1, 2, 3, 4, 5].map((i) => (
                             <div key={i} className="shrink-0 w-32 md:w-40 p-6 flex flex-col items-center gap-4">
                                 <div className="w-24 h-24 bg-background rounded-full animate-pulse" />
@@ -43,7 +43,7 @@ export default function Categories() {
 
                 {!loading && categories.length > 0 && (
                     <div className="marquee-viewport overflow-hidden">
-                        <div className="marquee-track flex w-max divide-x divide-line/40">
+                        <div className="marquee-track flex w-max">
                             {loop.map((cat, i) => {
                                 const Icon = ICONS[cat.icon] || Package;
                                 const isClone = i >= categories.length;

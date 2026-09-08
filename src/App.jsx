@@ -27,6 +27,8 @@ import OrderSuccess from "./pages/OrderSuccess";
 import MyOrders from "./pages/MyOrders";
 import SellerOrders from "./pages/SellerOrders";
 import ProductImport from "./pages/ProductImport";
+import ShopSettings from "./pages/ShopSettings";
+import AdminWithdrawals from "./pages/AdminWithdrawals";
 
 function Home() {
   return (
@@ -121,6 +123,14 @@ export default function App() {
             }
           />
           <Route
+            path="/seller/store"
+            element={
+              <ProtectedRoute allowedRoles={["seller"]}>
+                <ShopSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/seller/products/new"
             element={
               <ProtectedRoute allowedRoles={["seller"]}>
@@ -175,6 +185,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/withdrawals"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminWithdrawals />
               </ProtectedRoute>
             }
           />

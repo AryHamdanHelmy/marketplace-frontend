@@ -72,25 +72,25 @@ export default function SellerDashboard() {
     return (
         <>
             <SellerSidebar />
-            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-70 md:pr-10">
+            <div className="min-h-screen bg-background text-textPrimary pt-24 px-5 pb-12 md:pl-70 md:pr-10">
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}
                     <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-darkblue">Dashboard Overview</h1>
+                            <h1 className="text-3xl font-bold text-textPrimary">Dashboard Overview</h1>
                             <p className="text-sm text-black/60 mt-1">Your store performance at a glance.</p>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => alert("Export feature coming soon")}
-                                className="inline-flex items-center gap-2 border border-black/15 text-darkblue text-sm font-medium py-2 px-4 rounded-lg hover:bg-black/5 transition"
+                                className="inline-flex items-center gap-2 border border-line text-textPrimary text-sm font-medium py-2 px-4 rounded-lg hover:bg-surface transition"
                             >
                                 <Download size={16} />
                                 Export Data
                             </button>
                             <Link
                                 to="/seller/products/new"
-                                className="inline-flex items-center gap-2 bg-pastel-blue hover:bg-pastel-cyan text-white text-sm font-semibold py-2 px-4 rounded-lg transition"
+                                className="inline-flex items-center gap-2 bg-primary hover:bg-primaryHover text-white text-sm font-semibold py-2 px-4 rounded-lg transition"
                             >
                                 <Plus size={16} />
                                 Add New Product
@@ -100,7 +100,7 @@ export default function SellerDashboard() {
 
                     {loading && <p className="text-black/60">Loading dashboard...</p>}
 
-                    {!loading && error && <p className="text-red-500">Error: {error}</p>}
+                    {!loading && error && <p className="text-danger">Error: {error}</p>}
 
                     {!loading && !error && (
                         <>
@@ -111,8 +111,8 @@ export default function SellerDashboard() {
                                     value={loadingOrders ? "..." : formatPrice(totalSales)}
                                     note="From paid orders onward"
                                     icon={Wallet}
-                                    iconBg="bg-pastel-blue/15"
-                                    iconColor="text-pastel-blue"
+                                    iconBg="bg-primary/15"
+                                    iconColor="text-primary"
                                 />
                                 <MetricCard
                                     label="Total Orders"
@@ -159,7 +159,7 @@ export default function SellerDashboard() {
                             {/* Products table */}
                             <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
                                 <div className="px-5 py-4 border-b border-black/10 flex items-center justify-between">
-                                    <h2 className="text-lg font-bold text-darkblue">Your Products</h2>
+                                    <h2 className="text-lg font-bold text-textPrimary">Your Products</h2>
                                     <span className="text-sm text-black/40">
                                         {myProducts.length} total
                                     </span>
@@ -204,7 +204,7 @@ export default function SellerDashboard() {
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                <span className="font-medium text-darkblue">
+                                                                <span className="font-medium text-textPrimary">
                                                                     {product.title}
                                                                 </span>
                                                             </div>
@@ -220,7 +220,7 @@ export default function SellerDashboard() {
                                                             <div className="flex items-center justify-end gap-3">
                                                                 <button
                                                                     onClick={() => navigate(`/seller/products/${product.id}/edit`)}
-                                                                    className="text-black/50 hover:text-pastel-blue transition"
+                                                                    className="text-black/50 hover:text-primary transition"
                                                                     aria-label="Edit"
                                                                 >
                                                                     <Pencil size={16} />
@@ -228,7 +228,7 @@ export default function SellerDashboard() {
                                                                 <button
                                                                     onClick={() => handleDelete(product.id)}
                                                                     disabled={deletingId === product.id}
-                                                                    className="text-black/50 hover:text-red-500 transition disabled:opacity-40"
+                                                                    className="text-black/50 hover:text-danger transition disabled:opacity-40"
                                                                     aria-label="Delete"
                                                                 >
                                                                     <Trash2 size={16} />
@@ -257,7 +257,7 @@ function MetricCard({ label, value, note, icon: Icon, iconBg, iconColor }) {
                 <Icon size={18} className={iconColor} />
             </div>
             <p className="text-xs font-semibold text-black/50 uppercase mb-2 pr-12">{label}</p>
-            <h3 className="text-xl md:text-2xl font-bold text-darkblue mb-1">{value}</h3>
+            <h3 className="text-xl md:text-2xl font-bold text-textPrimary mb-1">{value}</h3>
             <p className="text-xs text-black/40">{note}</p>
         </div>
     );

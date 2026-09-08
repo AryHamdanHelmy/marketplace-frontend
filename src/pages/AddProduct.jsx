@@ -4,329 +4,428 @@ import { apiRequest } from "../api/Client";
 import { useFetch } from "../hooks/useFetch";
 import SellerSidebar from "../components/organisms/SellerSidebar";
 
+const MAX_EDGE = 1600;      // longest side after downscaling, in pixels
+const MAX_BYTES = 2 * 1024 * 1024;
+const JPEG_QUALITY = 0.82;
+
+// Phone cameras produce 4-6 MB files that blow past PHP's upload limit and
+// waste Cloudinary quota. A product thumbnail never needs that resolution, so
+// the image is redrawn onto a canvas at a sane size before it ever leaves the
+// browser.
+async function downscaleImage(file) {
+  if (!file.type.startsWith("image/")) return file;
+
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+
+  const { width, height } = bitmap;
+  const longest = Math.max(width, height);
+
+  // Small enough already — leave it alone
+  if (longest <= MAX_EDGE && file.size <= MAX_BYTES) {
+    bitmap.close?.();
+    return file;
+  }
+
+  const scale = Math.min(1, MAX_EDGE / longest);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
+  );
+
+  if (!blob) return file;
+
+  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], name, { type: "image/jpeg" });
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function AddProduct() {
-    const navigate = useNavigate();
-    const { data: categoriesRes } = useFetch("/categories?flat=1", []);
-    const categories = Array.isArray(categoriesRes)
-        ? categoriesRes
-        : categoriesRes?.data || [];
+  const navigate = useNavigate();
+  const { data: categoriesRes } = useFetch("/categories?flat=1", []);
+  const categories = Array.isArray(categoriesRes)
+    ? categoriesRes
+    : categoriesRes?.data || [];
 
-    const [form, setForm] = useState({
-        category_id: "",
-        name: "",
-        description: "",
-        price: "",
-        stock: "",
-        status: "draft",
-    });
-    const [image, setImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
-    const [errors, setErrors] = useState({});
-    const [serverError, setServerError] = useState("");
-    const [success, setSuccess] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const fileInputRef = useRef(null);
+  const [form, setForm] = useState({
+    category_id: "",
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    status: "draft",
+  });
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageNote, setImageNote] = useState("");
+  const [preparingImage, setPreparingImage] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+  };
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setImage(file);
-        setImagePreview(URL.createObjectURL(file));
-    };
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    const handleRemoveImage = () => {
-        setImage(null);
-        setImagePreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-    };
+    setPreparingImage(true);
+    setErrors((prev) => ({ ...prev, thumbnail: "" }));
 
-    const validate = () => {
-        const newErrors = {};
-        if (!form.category_id) newErrors.category_id = "Category is required";
-        if (!form.name.trim()) newErrors.name = "Product name is required";
-        if (!form.price || Number(form.price) < 0)
-            newErrors.price = "Enter a valid price";
-        if (form.stock !== "" && Number(form.stock) < 0)
-            newErrors.stock = "Stock cannot be negative";
-        return newErrors;
-    };
+    try {
+      const prepared = await downscaleImage(file);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setServerError("");
+      if (prepared.size > MAX_BYTES) {
+        setErrors((prev) => ({
+          ...prev,
+          thumbnail: `Still ${formatSize(prepared.size)} after resizing. Try a different image.`,
+        }));
+        setPreparingImage(false);
+        return;
+      }
 
-        const validationErrors = validate();
-        setErrors(validationErrors);
-        if (Object.keys(validationErrors).length > 0) return;
+      setImage(prepared);
+      setImagePreview(URL.createObjectURL(prepared));
+      setImageNote(
+        prepared.size < file.size
+          ? `Resized from ${formatSize(file.size)} to ${formatSize(prepared.size)}`
+          : formatSize(prepared.size)
+      );
+    } catch {
+      setErrors((prev) => ({
+        ...prev,
+        thumbnail: "Couldn't read that image. Try another file.",
+      }));
+    } finally {
+      setPreparingImage(false);
+    }
+  };
 
-        setSubmitting(true);
-        try {
-            // Pakai FormData kalau ada image, json biasa kalau tidak
-            if (image) {
-                const formData = new FormData();
-                formData.append("category_id", Number(form.category_id));
-                formData.append("name", form.name);
-                formData.append("description", form.description || "");
-                formData.append("price", Number(form.price));
-                formData.append("stock", form.stock === "" ? 0 : Number(form.stock));
-                formData.append("status", form.status);
-                formData.append("thumbnail", image);
+  const handleRemoveImage = () => {
+    setImage(null);
+    setImagePreview(null);
+    setImageNote("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-                await apiRequest("/products", {
-                    method: "POST",
-                    body: formData,
-                    isFormData: true,
-                });
-            } else {
-                await apiRequest("/products", {
-                    method: "POST",
-                    body: {
-                        category_id: Number(form.category_id),
-                        name: form.name,
-                        description: form.description || null,
-                        price: Number(form.price),
-                        stock: form.stock === "" ? 0 : Number(form.stock),
-                        status: form.status,
-                    },
-                });
-            }
+  const validate = () => {
+    const newErrors = {};
+    if (!form.category_id) newErrors.category_id = "Category is required";
+    if (!form.name.trim()) newErrors.name = "Product name is required";
+    if (!form.price || Number(form.price) < 0)
+      newErrors.price = "Enter a valid price";
+    if (form.stock !== "" && Number(form.stock) < 0)
+      newErrors.stock = "Stock cannot be negative";
+    return newErrors;
+  };
 
-            setSuccess(true);
-            setTimeout(() => navigate("/seller/dashboard"), 1000);
-        } catch (err) {
-            setServerError(err.message || "Failed to create product");
-            setSubmitting(false);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setServerError("");
 
-    return (
-        <>
-            <SellerSidebar />
-            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-70 md:pr-10">
-                <div className="max-w-2xl mx-auto">
-                    <h1 className="text-2xl font-bold text-darkblue mb-1">Add New Product</h1>
-                    <p className="text-sm text-black/60 mb-6">
-                        Fill in the details below to add a product to your catalog.
-                    </p>
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
 
-                    {serverError && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3 mb-4">
-                            {serverError}
-                        </div>
-                    )}
+    setSubmitting(true);
+    try {
+      if (image) {
+        const formData = new FormData();
+        formData.append("category_id", Number(form.category_id));
+        formData.append("name", form.name);
+        formData.append("description", form.description || "");
+        formData.append("price", Number(form.price));
+        formData.append("stock", form.stock === "" ? 0 : Number(form.stock));
+        formData.append("status", form.status);
+        formData.append("thumbnail", image);
 
-                    {success && (
-                        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg px-4 py-3 mb-4">
-                            Product created! Redirecting to your dashboard...
-                        </div>
-                    )}
+        await apiRequest("/products", { method: "POST", body: formData });
+      } else {
+        await apiRequest("/products", {
+          method: "POST",
+          body: {
+            category_id: Number(form.category_id),
+            name: form.name,
+            description: form.description || null,
+            price: Number(form.price),
+            stock: form.stock === "" ? 0 : Number(form.stock),
+            status: form.status,
+          },
+        });
+      }
 
-                    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      setSuccess(true);
+      setTimeout(() => navigate("/seller/dashboard"), 1000);
+    } catch (err) {
+      // Laravel returns per-field messages under `errors`. Showing only the
+      // top-level "Validation failed" leaves the seller guessing.
+      if (err.errors) {
+        const mapped = {};
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          mapped[field] = Array.isArray(messages) ? messages[0] : messages;
+        });
+        setErrors(mapped);
+        setServerError("Check the highlighted fields below.");
+      } else {
+        setServerError(err.message || "Failed to create product");
+      }
+      setSubmitting(false);
+    }
+  };
 
-                        {/* Product Image */}
-                        <Section title="Product Image">
-                            <div className="flex flex-col items-center gap-4">
-                                {/* Preview */}
-                                {imagePreview ? (
-                                    <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-black/10 bg-black/5">
-                                        <img
-                                            src={imagePreview}
-                                            alt="Preview"
-                                            className="w-full h-full object-contain"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleRemoveImage}
-                                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm transition"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full aspect-video rounded-xl border-2 border-dashed border-black/15 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-pastel-blue hover:bg-blue-50/30 transition"
-                                    >
-                                        <div className="text-3xl">🖼️</div>
-                                        <p className="text-sm text-black/50 font-medium">Click to upload image</p>
-                                        <p className="text-xs text-black/30">PNG, JPG, WEBP — max 2MB</p>
-                                    </div>
-                                )}
+  return (
+    <>
+      <SellerSidebar />
+      <div className="min-h-screen bg-background text-textPrimary pt-24 px-5 pb-12 md:pl-70 md:pr-10">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold text-textPrimary mb-1">
+            Add New Product
+          </h1>
+          <p className="text-sm text-textSecondary mb-6">
+            Fill in the details below to add a product to your catalog.
+          </p>
 
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/png, image/jpeg, image/webp"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                />
-
-                                {!imagePreview && (
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="text-sm text-pastel-blue font-medium hover:underline"
-                                    >
-                                        Browse file
-                                    </button>
-                                )}
-                            </div>
-                        </Section>
-
-                        {/* Basic Info */}
-                        <Section title="Basic Information">
-                            <Field label="Product Name" error={errors.name}>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={form.name}
-                                    onChange={handleChange}
-                                    placeholder="e.g. AI Writing Assistant"
-                                    className={inputClass(errors.name)}
-                                />
-                            </Field>
-
-                            <Field label="Category" error={errors.category_id}>
-                                <select
-                                    name="category_id"
-                                    value={form.category_id}
-                                    onChange={handleChange}
-                                    className={inputClass(errors.category_id)}
-                                >
-                                    <option value="">Select category</option>
-                                    {Object.entries(
-                                        categories.reduce((acc, cat) => {
-                                            const group = cat.parent_name || "Lainnya";
-                                            (acc[group] ||= []).push(cat);
-                                            return acc;
-                                        }, {})
-                                    ).map(([groupName, items]) => (
-                                        <optgroup key={groupName} label={groupName}>
-                                            {items.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>
-                                                    {cat.name}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    ))}
-                                </select>
-                            </Field>
-                        </Section>
-
-                        {/* Price & Stock */}
-                        <Section title="Pricing & Stock">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Field label="Price (Rp)" error={errors.price}>
-                                    <input
-                                        type="number"
-                                        name="price"
-                                        value={form.price}
-                                        onChange={handleChange}
-                                        placeholder="0"
-                                        min="0"
-                                        className={inputClass(errors.price)}
-                                    />
-                                </Field>
-
-                                <Field label="Stock" error={errors.stock}>
-                                    <input
-                                        type="number"
-                                        name="stock"
-                                        value={form.stock}
-                                        onChange={handleChange}
-                                        placeholder="0"
-                                        min="0"
-                                        className={inputClass(errors.stock)}
-                                    />
-                                </Field>
-                            </div>
-                        </Section>
-
-                        {/* Description */}
-                        <Section title="Description">
-                            <Field label="Description">
-                                <textarea
-                                    name="description"
-                                    value={form.description}
-                                    onChange={handleChange}
-                                    placeholder="Describe your product..."
-                                    rows={5}
-                                    className={inputClass(false) + " resize-y"}
-                                />
-                            </Field>
-                        </Section>
-
-                        {/* Status */}
-                        <Section title="Visibility">
-                            <Field label="Status">
-                                <select
-                                    name="status"
-                                    value={form.status}
-                                    onChange={handleChange}
-                                    className={inputClass(false)}
-                                >
-                                    <option value="draft">Draft (not visible to buyers)</option>
-                                    <option value="active">Active (visible to buyers)</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </Field>
-                        </Section>
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-end gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => navigate("/seller/dashboard")}
-                                className="px-6 py-2 rounded-lg text-sm font-medium text-pastel-blue hover:bg-black/5 transition"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={submitting || success}
-                                className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-pastel-blue hover:bg-pastel-cyan transition disabled:opacity-60"
-                            >
-                                {success ? "Saved!" : submitting ? "Saving..." : "Save Product"}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+          {serverError && (
+            <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-4">
+              {serverError}
             </div>
-        </>
-    );
+          )}
+
+          {success && (
+            <div className="bg-successSoft border border-success/30 text-success text-sm rounded-lg px-4 py-3 mb-4">
+              Product created! Redirecting to your dashboard...
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
+
+            {/* Product Image */}
+            <Section title="Product Image">
+              <div className="flex flex-col items-center gap-4">
+                {imagePreview ? (
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-line bg-ink-100">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      aria-label="Remove image"
+                      className="absolute top-2 right-2 bg-danger hover:opacity-90 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full aspect-video rounded-xl border-2 border-dashed border-lineStrong flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primarySoft transition"
+                  >
+                    <p className="text-sm text-textSecondary font-medium">
+                      {preparingImage ? "Preparing image..." : "Tap to upload an image"}
+                    </p>
+                    <p className="text-xs text-textMuted text-center">
+                      PNG, JPG, WEBP — large photos are resized automatically
+                    </p>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+
+                {imageNote && !errors.thumbnail && (
+                  <p className="text-xs text-textMuted">{imageNote}</p>
+                )}
+                {errors.thumbnail && (
+                  <p className="text-sm text-danger">{errors.thumbnail}</p>
+                )}
+
+                {!imagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={preparingImage}
+                    className="text-sm text-primary font-medium hover:underline disabled:opacity-60"
+                  >
+                    Browse file
+                  </button>
+                )}
+              </div>
+            </Section>
+
+            {/* Basic Info */}
+            <Section title="Basic Information">
+              <Field label="Product Name" error={errors.name}>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="e.g. AI Writing Assistant"
+                  className={inputClass(errors.name)}
+                />
+              </Field>
+
+              <Field label="Category" error={errors.category_id}>
+                <select
+                  name="category_id"
+                  value={form.category_id}
+                  onChange={handleChange}
+                  className={inputClass(errors.category_id)}
+                >
+                  <option value="">Select category</option>
+                  {Object.entries(
+                    categories.reduce((acc, cat) => {
+                      const group = cat.parent_name || "Other";
+                      (acc[group] ||= []).push(cat);
+                      return acc;
+                    }, {})
+                  ).map(([groupName, items]) => (
+                    <optgroup key={groupName} label={groupName}>
+                      {items.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </Field>
+            </Section>
+
+            {/* Price & Stock */}
+            <Section title="Pricing & Stock">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Price (Rp)" error={errors.price}>
+                  <input
+                    type="number"
+                    name="price"
+                    value={form.price}
+                    onChange={handleChange}
+                    placeholder="0"
+                    min="0"
+                    className={inputClass(errors.price)}
+                  />
+                </Field>
+
+                <Field label="Stock" error={errors.stock}>
+                  <input
+                    type="number"
+                    name="stock"
+                    value={form.stock}
+                    onChange={handleChange}
+                    placeholder="0"
+                    min="0"
+                    className={inputClass(errors.stock)}
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            {/* Description */}
+            <Section title="Description">
+              <Field label="Description" error={errors.description}>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  placeholder="Describe your product..."
+                  rows={5}
+                  className={inputClass(false) + " resize-y"}
+                />
+              </Field>
+            </Section>
+
+            {/* Status */}
+            <Section title="Visibility">
+              <Field label="Status" error={errors.status}>
+                <select
+                  name="status"
+                  value={form.status}
+                  onChange={handleChange}
+                  className={inputClass(false)}
+                >
+                  <option value="draft">Draft (not visible to buyers)</option>
+                  <option value="active">Active (visible to buyers)</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </Field>
+            </Section>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/seller/dashboard")}
+                className="px-6 py-2 rounded-lg text-sm font-medium text-textSecondary hover:bg-ink-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || success || preparingImage}
+                className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primaryHover transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {success ? "Saved!" : submitting ? "Saving..." : "Save Product"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
 }
 
 function Section({ title, children }) {
-    return (
-        <div className="bg-white border border-black/10 rounded-xl p-5 shadow-sm">
-            <h3 className="text-base font-bold text-darkblue mb-4 border-b border-black/10 pb-2">
-                {title}
-            </h3>
-            <div className="space-y-4">{children}</div>
-        </div>
-    );
+  return (
+    <div className="bg-surface border border-line rounded-xl p-5">
+      <h3 className="text-base font-bold text-textPrimary mb-4 border-b border-line pb-2">
+        {title}
+      </h3>
+      <div className="space-y-4">{children}</div>
+    </div>
+  );
 }
 
 function Field({ label, error, children }) {
-    return (
-        <div>
-            <label className="block text-xs font-semibold text-black/70 mb-1">
-                {label}
-            </label>
-            {children}
-            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-        </div>
-    );
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-textSecondary mb-1">
+        {label}
+      </label>
+      {children}
+      {error && <p className="text-danger text-xs mt-1">{error}</p>}
+    </div>
+  );
 }
 
 function inputClass(hasError) {
-    return `w-full bg-white border rounded-lg px-3 py-2 text-sm text-darkblue focus:outline-none focus:ring-2 transition ${
-        hasError
-            ? "border-red-300 focus:ring-red-300"
-            : "border-black/15 focus:ring-pastel-blue"
-    }`;
+  return `w-full bg-surface border rounded-lg px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 transition ${
+    hasError
+      ? "border-danger focus:ring-danger"
+      : "border-line focus:ring-primary"
+  }`;
 }

@@ -129,10 +129,10 @@ export default function Auth() {
           </button>
           <img src={logoFull} alt="Rapaku" className="h-6 w-auto" />
           <Link
-            to="/explore"
+            to="/"
             className="text-sm text-textSecondary hover:text-textPrimary transition"
           >
-            Help
+            Home
           </Link>
         </header>
 

@@ -61,7 +61,7 @@ export default function UsersDetail() {
     }, [id]);
 
     return (
-        <div className="min-h-screen bg-hitam text-darkblue pt-24 px-6 py-12">
+        <div className="min-h-screen bg-background text-darkblue pt-24 px-6 py-12">
             <div className="max-w-lg mx-auto">
                 <Link
                     to="/users"
