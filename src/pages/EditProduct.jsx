@@ -4,6 +4,7 @@ import { apiRequest } from "../api/Client";
 import { useFetch } from "../hooks/useFetch";
 import SellerSidebar from "../components/organisms/SellerSidebar";
 import { useAuth } from "../context/AuthContext";
+import { downscaleImage, formatSize, IMAGE_MAX_BYTES } from "../utils/image";
 
 export default function EditProduct() {
     const { id } = useParams();
@@ -29,6 +30,8 @@ export default function EditProduct() {
     const [existingThumbnail, setExistingThumbnail] = useState(null);
     const [newImage, setNewImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    const [imageNote, setImageNote] = useState("");
+    const [preparingImage, setPreparingImage] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -42,26 +45,55 @@ export default function EditProduct() {
                 stock: product.stock ?? "",
                 status: product.status ?? "draft",
             });
-            // Set gambar existing dari API
             setExistingThumbnail(product.thumbnail ?? null);
         }
     }, [productRes, form]);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+        setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
     };
 
-    const handleImageChange = (e) => {
+    const handleImageChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        setNewImage(file);
-        setImagePreview(URL.createObjectURL(file));
+
+        setPreparingImage(true);
+        setErrors((prev) => ({ ...prev, thumbnail: "" }));
+
+        try {
+            const prepared = await downscaleImage(file);
+
+            if (prepared.size > IMAGE_MAX_BYTES) {
+                setErrors((prev) => ({
+                    ...prev,
+                    thumbnail: `Still ${formatSize(prepared.size)} after resizing. Try a different image.`,
+                }));
+                return;
+            }
+
+            setNewImage(prepared);
+            setImagePreview(URL.createObjectURL(prepared));
+            setImageNote(
+                prepared.size < file.size
+                    ? `Resized from ${formatSize(file.size)} to ${formatSize(prepared.size)}`
+                    : formatSize(prepared.size)
+            );
+        } catch {
+            setErrors((prev) => ({
+                ...prev,
+                thumbnail: "Couldn't read that image. Try another file.",
+            }));
+        } finally {
+            setPreparingImage(false);
+        }
     };
 
     const handleRemoveImage = () => {
         setNewImage(null);
         setImagePreview(null);
         setExistingThumbnail(null);
+        setImageNote("");
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
@@ -87,7 +119,6 @@ export default function EditProduct() {
         setSubmitting(true);
         try {
             if (newImage) {
-                // Ada gambar baru — pakai FormData
                 const formData = new FormData();
                 formData.append("category_id", Number(form.category_id));
                 formData.append("name", form.name);
@@ -96,7 +127,8 @@ export default function EditProduct() {
                 formData.append("stock", form.stock === "" ? 0 : Number(form.stock));
                 formData.append("status", form.status);
                 formData.append("thumbnail", newImage);
-                // Laravel PUT tidak support FormData langsung, pakai POST + _method spoofing
+                // PHP doesn't parse multipart bodies on PUT, so this goes out
+                // as POST and Laravel translates it back.
                 formData.append("_method", "PUT");
 
                 await apiRequest(`/products/${id}`, {
@@ -104,7 +136,6 @@ export default function EditProduct() {
                     body: formData,
                 });
             } else {
-                // Tidak ada gambar baru — kirim JSON biasa
                 await apiRequest(`/products/${id}`, {
                     method: "PUT",
                     body: {
@@ -119,9 +150,21 @@ export default function EditProduct() {
             }
 
             setSuccess(true);
-            setTimeout(() => navigate(isAdmin?"/admin/products":"/seller/dashboard"), 1000);
+            setTimeout(
+                () => navigate(isAdmin ? "/admin/products" : "/seller/dashboard"),
+                1000
+            );
         } catch (err) {
-            setServerError(err.message || "Failed to update product");
+            if (err.errors) {
+                const mapped = {};
+                Object.entries(err.errors).forEach(([field, messages]) => {
+                    mapped[field] = Array.isArray(messages) ? messages[0] : messages;
+                });
+                setErrors(mapped);
+                setServerError("Check the highlighted fields below.");
+            } else {
+                setServerError(err.message || "Failed to update product");
+            }
             setSubmitting(false);
         }
     };
@@ -132,32 +175,32 @@ export default function EditProduct() {
     return (
         <>
             <SellerSidebar />
-            <div className="min-h-screen bg-white text-darkblue pt-24 px-5 pb-12 md:pl-70 md:pr-10">
+            <div className="min-h-screen bg-background text-textPrimary pt-24 px-5 pb-12 md:pl-70 md:pr-10">
                 <div className="max-w-2xl mx-auto">
-                    <h1 className="text-2xl font-bold text-darkblue mb-1">Edit Product</h1>
-                    <p className="text-sm text-black/60 mb-6">
+                    <h1 className="text-2xl font-bold text-textPrimary mb-1">Edit Product</h1>
+                    <p className="text-sm text-textSecondary mb-6">
                         Update the details of your product below.
                     </p>
 
                     {loadingProduct && (
-                        <p className="text-black/60">Loading product...</p>
+                        <p className="text-textSecondary">Loading product...</p>
                     )}
 
                     {!loadingProduct && loadError && (
-                        <p className="text-red-500">Error: {loadError}</p>
+                        <p className="text-danger">Error: {loadError}</p>
                     )}
 
                     {!loadingProduct && !loadError && form && (
                         <>
                             {serverError && (
-                                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3 mb-4">
+                                <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-4">
                                     {serverError}
                                 </div>
                             )}
 
                             {success && (
-                                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg px-4 py-3 mb-4">
-                                    Product updated! Redirecting to your dashboard...
+                                <div className="bg-successSoft border border-success/30 text-success text-sm rounded-lg px-4 py-3 mb-4">
+                                    Product updated! Redirecting...
                                 </div>
                             )}
 
@@ -167,28 +210,27 @@ export default function EditProduct() {
                                 <Section title="Product Image">
                                     <div className="flex flex-col items-center gap-4">
                                         {displayImage ? (
-                                            <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-black/10 bg-black/5">
+                                            <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-line bg-ink-100">
                                                 <img
                                                     src={displayImage}
                                                     alt="Preview"
                                                     className="w-full h-full object-contain"
                                                 />
-                                                {/* Badge "Current" kalau masih gambar lama */}
                                                 {!imagePreview && existingThumbnail && (
-                                                    <span className="absolute top-2 left-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full">
+                                                    <span className="absolute top-2 left-2 bg-textPrimary/70 text-white text-[10px] px-2 py-0.5 rounded-full">
                                                         Current image
                                                     </span>
                                                 )}
-                                                {/* Badge "New" kalau gambar baru */}
                                                 {imagePreview && (
-                                                    <span className="absolute top-2 left-2 bg-pastel-blue text-white text-[10px] px-2 py-0.5 rounded-full">
+                                                    <span className="absolute top-2 left-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full">
                                                         New image
                                                     </span>
                                                 )}
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveImage}
-                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm transition"
+                                                    aria-label="Remove image"
+                                                    className="absolute top-2 right-2 bg-danger hover:opacity-90 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm transition"
                                                 >
                                                     ✕
                                                 </button>
@@ -196,11 +238,14 @@ export default function EditProduct() {
                                         ) : (
                                             <div
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="w-full aspect-video rounded-xl border-2 border-dashed border-black/15 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-pastel-blue hover:bg-blue-50/30 transition"
+                                                className="w-full aspect-video rounded-xl border-2 border-dashed border-lineStrong flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primarySoft transition"
                                             >
-                                                <div className="text-3xl">🖼️</div>
-                                                <p className="text-sm text-black/50 font-medium">Click to upload image</p>
-                                                <p className="text-xs text-black/30">PNG, JPG, WEBP — max 2MB</p>
+                                                <p className="text-sm text-textSecondary font-medium">
+                                                    {preparingImage ? "Preparing image..." : "Tap to upload an image"}
+                                                </p>
+                                                <p className="text-xs text-textMuted">
+                                                    PNG, JPG, WEBP — large photos are resized automatically
+                                                </p>
                                             </div>
                                         )}
 
@@ -212,10 +257,18 @@ export default function EditProduct() {
                                             className="hidden"
                                         />
 
+                                        {imageNote && !errors.thumbnail && (
+                                            <p className="text-xs text-textMuted">{imageNote}</p>
+                                        )}
+                                        {errors.thumbnail && (
+                                            <p className="text-sm text-danger">{errors.thumbnail}</p>
+                                        )}
+
                                         <button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="text-sm text-pastel-blue font-medium hover:underline"
+                                            disabled={preparingImage}
+                                            className="text-sm text-primary font-medium hover:underline disabled:opacity-60"
                                         >
                                             {displayImage ? "Change image" : "Browse file"}
                                         </button>
@@ -245,7 +298,7 @@ export default function EditProduct() {
                                             <option value="">Select category</option>
                                             {Object.entries(
                                                 categories.reduce((acc, cat) => {
-                                                    const group = cat.parent_name || "Lainnya";
+                                                    const group = cat.parent_name || "Other";
                                                     (acc[group] ||= []).push(cat);
                                                     return acc;
                                                 }, {})
@@ -293,7 +346,7 @@ export default function EditProduct() {
 
                                 {/* Description */}
                                 <Section title="Description">
-                                    <Field label="Description">
+                                    <Field label="Description" error={errors.description}>
                                         <textarea
                                             name="description"
                                             value={form.description}
@@ -307,7 +360,7 @@ export default function EditProduct() {
 
                                 {/* Status */}
                                 <Section title="Visibility">
-                                    <Field label="Status">
+                                    <Field label="Status" error={errors.status}>
                                         <select
                                             name="status"
                                             value={form.status}
@@ -325,15 +378,15 @@ export default function EditProduct() {
                                 <div className="flex items-center justify-end gap-3 pt-2">
                                     <button
                                         type="button"
-                                        onClick={() => navigate(isAdmin? "/admin/products" : "/seller/dashboard")}
-                                        className="px-6 py-2 rounded-lg text-sm font-medium text-pastel-blue hover:bg-black/5 transition"
+                                        onClick={() => navigate(isAdmin ? "/admin/products" : "/seller/dashboard")}
+                                        className="px-6 py-2 rounded-lg text-sm font-medium text-textSecondary hover:bg-ink-100 transition"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={submitting || success}
-                                        className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-pastel-blue hover:bg-pastel-cyan transition disabled:opacity-60"
+                                        disabled={submitting || success || preparingImage}
+                                        className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primaryHover transition disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                         {success ? "Saved!" : submitting ? "Saving..." : "Save Changes"}
                                     </button>
@@ -349,8 +402,8 @@ export default function EditProduct() {
 
 function Section({ title, children }) {
     return (
-        <div className="bg-white border border-black/10 rounded-xl p-5 shadow-sm">
-            <h3 className="text-base font-bold text-darkblue mb-4 border-b border-black/10 pb-2">
+        <div className="bg-surface border border-line rounded-xl p-5">
+            <h3 className="text-base font-bold text-textPrimary mb-4 border-b border-line pb-2">
                 {title}
             </h3>
             <div className="space-y-4">{children}</div>
@@ -361,19 +414,19 @@ function Section({ title, children }) {
 function Field({ label, error, children }) {
     return (
         <div>
-            <label className="block text-xs font-semibold text-black/70 mb-1">
+            <label className="block text-xs font-semibold text-textSecondary mb-1">
                 {label}
             </label>
             {children}
-            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+            {error && <p className="text-danger text-xs mt-1">{error}</p>}
         </div>
     );
 }
 
 function inputClass(hasError) {
-    return `w-full bg-white border rounded-lg px-3 py-2 text-sm text-darkblue focus:outline-none focus:ring-2 transition ${
+    return `w-full bg-surface border rounded-lg px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 transition ${
         hasError
-            ? "border-red-300 focus:ring-red-300"
-            : "border-black/15 focus:ring-pastel-blue"
+            ? "border-danger focus:ring-danger"
+            : "border-line focus:ring-primary"
     }`;
 }

@@ -3,53 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/Client";
 import { useFetch } from "../hooks/useFetch";
 import SellerSidebar from "../components/organisms/SellerSidebar";
-
-const MAX_EDGE = 1600;      // longest side after downscaling, in pixels
-const MAX_BYTES = 2 * 1024 * 1024;
-const JPEG_QUALITY = 0.82;
-
-// Phone cameras produce 4-6 MB files that blow past PHP's upload limit and
-// waste Cloudinary quota. A product thumbnail never needs that resolution, so
-// the image is redrawn onto a canvas at a sane size before it ever leaves the
-// browser.
-async function downscaleImage(file) {
-  if (!file.type.startsWith("image/")) return file;
-
-  const bitmap = await createImageBitmap(file).catch(() => null);
-  if (!bitmap) return file;
-
-  const { width, height } = bitmap;
-  const longest = Math.max(width, height);
-
-  // Small enough already — leave it alone
-  if (longest <= MAX_EDGE && file.size <= MAX_BYTES) {
-    bitmap.close?.();
-    return file;
-  }
-
-  const scale = Math.min(1, MAX_EDGE / longest);
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(width * scale);
-  canvas.height = Math.round(height * scale);
-
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close?.();
-
-  const blob = await new Promise((resolve) =>
-    canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
-  );
-
-  if (!blob) return file;
-
-  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
-  return new File([blob], name, { type: "image/jpeg" });
-}
-
-function formatSize(bytes) {
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { downscaleImage, formatSize, IMAGE_MAX_BYTES } from "../utils/image";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -91,7 +45,7 @@ export default function AddProduct() {
     try {
       const prepared = await downscaleImage(file);
 
-      if (prepared.size > MAX_BYTES) {
+      if (prepared.size > IMAGE_MAX_BYTES) {
         setErrors((prev) => ({
           ...prev,
           thumbnail: `Still ${formatSize(prepared.size)} after resizing. Try a different image.`,

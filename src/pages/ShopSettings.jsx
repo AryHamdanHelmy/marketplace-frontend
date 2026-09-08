@@ -2,38 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { apiRequest } from "../api/Client";
 import SellerSidebar from "../components/organisms/SellerSidebar";
 import { Store, Landmark, Upload, Check, TriangleAlert } from "lucide-react";
-
-const MAX_EDGE = 1200;
-const JPEG_QUALITY = 0.85;
-
-// Same treatment as the product uploader: phone photos are far larger than a
-// shop logo needs to be, and PHP's upload limit is lower than people expect.
-async function downscaleImage(file) {
-  if (!file.type.startsWith("image/")) return file;
-
-  const bitmap = await createImageBitmap(file).catch(() => null);
-  if (!bitmap) return file;
-
-  const longest = Math.max(bitmap.width, bitmap.height);
-  if (longest <= MAX_EDGE && file.size <= 1024 * 1024) {
-    bitmap.close?.();
-    return file;
-  }
-
-  const scale = Math.min(1, MAX_EDGE / longest);
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close?.();
-
-  const blob = await new Promise((r) => canvas.toBlob(r, "image/jpeg", JPEG_QUALITY));
-  if (!blob) return file;
-
-  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
-    type: "image/jpeg",
-  });
-}
+import { downscaleImage } from "../utils/image";
 
 export default function ShopSettings() {
   const [loading, setLoading] = useState(true);
@@ -103,7 +72,7 @@ export default function ShopSettings() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const prepared = await downscaleImage(file);
+    const prepared = await downscaleImage(file, {maxEdge: 1200, quality:0.85});
     setLogoFile(prepared);
     setLogoPreview(URL.createObjectURL(prepared));
   };
