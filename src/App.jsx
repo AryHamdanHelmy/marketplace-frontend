@@ -3,11 +3,6 @@ import { Routes, Route, Outlet } from "react-router-dom";
 import { SellerNavProvider } from "./context/SellerNavContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
-import Hero from "./components/SectionHero";
-import Category from "./components/SectionCategory";
-import Featured from "./components/SectionFeature";
-import FeaturedImage from "./assets/trand.png";
-import Tranding from "./components/SectionTranding";
 import Footer from "./components/Footer";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
@@ -30,21 +25,7 @@ import ProductImport from "./pages/ProductImport";
 import ShopSettings from "./pages/ShopSettings";
 import AdminWithdrawals from "./pages/AdminWithdrawals";
 import SellerBalance from "./pages/SellerBalance";
-
-function Home() {
-  return (
-    <>
-      <Hero />
-      <Category />
-      <Featured
-        image={FeaturedImage}
-        title="Top Rated AI Tools"
-        description="Revolutionize your workflow with this highly-rated AI tool. Experience unparalleled efficiency and innovation."
-      />
-      <Tranding />
-    </>
-  );
-}
+import Home from "./pages/Home";
 
 // The storefront shell. Auth pages deliberately sit outside this so the
 // navbar, search, and cart don't appear while someone is signing in.

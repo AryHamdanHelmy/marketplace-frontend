@@ -1,135 +1,462 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useFetch } from "../hooks/useFetch";
-import ProductCard from "../components/organisms/ProductCard";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { apiRequest } from "../api/Client";
+import {
+  SlidersHorizontal, LayoutGrid, List, Star, X, ChevronDown, ArrowUp,
+} from "lucide-react";
 
 const PER_PAGE = 12;
 
+const SORTS = [
+  { value: "created_at:desc",  label: "Newest" },
+  { value: "rating:desc",      label: "Top rated" },
+  { value: "price:asc",        label: "Price: low to high" },
+  { value: "price:desc",       label: "Price: high to low" },
+];
+
+const rupiah = (value) =>
+  "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
+
 export default function Explore() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const search = searchParams.get("search") || "";
+
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
 
-  // Reset ke halaman 1 tiap kali kata kunci pencarian berubah
+  const [categoryId, setCategoryId] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState("created_at:desc");
+
+  const [draftMin, setDraftMin] = useState("");
+  const [draftMax, setDraftMax] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [view, setView] = useState("grid");
+
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    setPage(1);
-  }, [search]);
+    (async () => {
+      try {
+        const res = await apiRequest("/categories");
+        setCategories(res.data || []);
+      } catch {
+        // Categories are a convenience here — the page still works without them
+      }
+    })();
+  }, []);
 
-  const query = search
-    ? `?search=${encodeURIComponent(search)}&page=${page}&per_page=${PER_PAGE}`
-    : `?page=${page}&per_page=${PER_PAGE}`;
+  const buildQuery = useCallback(
+    (targetPage) => {
+      const [sortBy, order] = sort.split(":");
+      const params = new URLSearchParams({
+        page: targetPage,
+        per_page: PER_PAGE,
+        sort_by: sortBy,
+        order,
+      });
 
-  const { data, loading, error } = useFetch(`/products${query}`, [search, page]);
+      if (search) params.set("search", search);
+      if (categoryId) params.set("category_id", categoryId);
+      if (minPrice) params.set("min_price", minPrice);
+      if (maxPrice) params.set("max_price", maxPrice);
 
-  const products = data?.data || [];
-  const meta = data?.meta || null;
+      return params.toString();
+    },
+    [search, categoryId, minPrice, maxPrice, sort]
+  );
 
-  const goToPage = (newPage) => {
-    if (newPage < 1) return;
-    if (meta && newPage > meta.last_page) return;
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  // Changing a filter resets to page one and replaces the list. Load-more
+  // appends instead, so the two paths are kept separate.
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+
+    (async () => {
+      try {
+        const res = await apiRequest(`/products?${buildQuery(1)}`);
+        if (cancelled) return;
+        setProducts(res.data || []);
+        setMeta(res.meta || null);
+        setPage(1);
+      } catch (err) {
+        if (!cancelled) setError(err.message || "Couldn't load products.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildQuery]);
+
+  const loadMore = async () => {
+    const next = page + 1;
+    setLoadingMore(true);
+
+    try {
+      const res = await apiRequest(`/products?${buildQuery(next)}`);
+      setProducts((prev) => [...prev, ...(res.data || [])]);
+      setMeta(res.meta || null);
+      setPage(next);
+    } catch (err) {
+      setError(err.message || "Couldn't load more.");
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
+  const applyPriceFilter = () => {
+    setMinPrice(draftMin);
+    setMaxPrice(draftMax);
+    setFiltersOpen(false);
+  };
+
+  const clearAll = () => {
+    setCategoryId("");
+    setMinPrice("");
+    setMaxPrice("");
+    setDraftMin("");
+    setDraftMax("");
+  };
+
+  const activeCategory = categories.find((c) => String(c.id) === String(categoryId));
+  const activeFilterCount = [categoryId, minPrice, maxPrice].filter(Boolean).length;
+  const hasMore = meta && meta.current_page < meta.last_page;
+
   return (
-    <div className="min-h-screen bg-background text-textPrimary pt-24 px-5 pb-12 md:px-25">
-      <h1 className="text-2xl font-semibold mb-2">
-        {search ? `Results for "${search}"` : "Explore Products"}
-      </h1>
+    <div className="min-h-screen bg-background pt-20 pb-12">
+      <div className="max-w-5xl mx-auto px-4">
 
-      {!loading && !error && meta && (
-        <p className="text-sm text-textSecondary mb-6">{meta.total} products found</p>
-      )}
-
-      {loading && products.length === 0 && (
-        <p className="text-textSecondary mt-6">Loading products...</p>
-      )}
-
-      {!loading && error && (
-        <p className="text-danger mt-6">Error: {error}</p>
-      )}
-
-      {!loading && !error && products.length === 0 && (
-        <p className="text-textSecondary mt-6">
-          No products found{search ? ` for "${search}"` : ""}.
-        </p>
-      )}
-
-      {products.length > 0 && (
-        <>
-          <div
-            className={`grid grid-cols-2 md:grid-cols-4 gap-5 transition-opacity ${
-              loading ? "opacity-50 pointer-events-none" : "opacity-100"
-            }`}
-          >
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onClick={() => navigate(`/products/${product.id}`)}
-              />
+        {/* Category chips */}
+        {categories.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 -mx-4 px-4">
+            <button
+              onClick={() => setCategoryId("")}
+              className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${
+                !categoryId
+                  ? "bg-primary text-white font-semibold"
+                  : "bg-ink-100 text-textSecondary hover:bg-ink-200"
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setCategoryId(String(cat.id))}
+                className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${
+                  String(categoryId) === String(cat.id)
+                    ? "bg-primary text-white font-semibold"
+                    : "bg-ink-100 text-textSecondary hover:bg-ink-200"
+                }`}
+              >
+                {cat.name}
+              </button>
             ))}
           </div>
+        )}
 
-          {meta && meta.last_page > 1 && (
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-8 text-sm text-textPrimary">
-              <p className="text-center md:text-left">
-                Page {meta.current_page} of {meta.last_page}
-              </p>
+        {/* Toolbar */}
+        <div className="flex items-center gap-2 py-3">
+          <button
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-line bg-surface text-sm text-textPrimary hover:bg-ink-100 transition"
+          >
+            <SlidersHorizontal size={15} />
+            Filter
+            {activeFilterCount > 0 && (
+              <span className="min-w-5 h-5 px-1.5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
 
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                <button
-                  onClick={() => goToPage(meta.current_page - 1)}
-                  disabled={meta.current_page <= 1 || loading}
-                  className="px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/35 hover:bg-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  ← Prev
-                </button>
+          <div className="relative flex-1 min-w-0">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label="Sort products"
+              className="w-full appearance-none bg-surface border border-line rounded-lg pl-3 pr-8 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={15}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-textMuted"
+            />
+          </div>
 
-                <PageNumbers meta={meta} onGoToPage={goToPage} disabled={loading} />
+          <div className="flex rounded-lg border border-line overflow-hidden shrink-0">
+            <button
+              onClick={() => setView("grid")}
+              aria-label="Grid view"
+              aria-pressed={view === "grid"}
+              className={`p-2 transition ${
+                view === "grid" ? "bg-primary text-white" : "bg-surface text-textSecondary"
+              }`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setView("list")}
+              aria-label="List view"
+              aria-pressed={view === "list"}
+              className={`p-2 transition ${
+                view === "list" ? "bg-primary text-white" : "bg-surface text-textSecondary"
+              }`}
+            >
+              <List size={16} />
+            </button>
+          </div>
+        </div>
 
-                <button
-                  onClick={() => goToPage(meta.current_page + 1)}
-                  disabled={meta.current_page >= meta.last_page || loading}
-                  className="px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/35 hover:bg-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  Next →
-                </button>
-              </div>
+        {/* Filter panel */}
+        {filtersOpen && (
+          <div className="bg-surface border border-line rounded-xl p-4 mb-3">
+            <p className="text-label uppercase text-textSecondary mb-2">Price range</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                value={draftMin}
+                onChange={(e) => setDraftMin(e.target.value)}
+                placeholder="Min"
+                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm tabular focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <span className="text-textMuted">–</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={draftMax}
+                onChange={(e) => setDraftMax(e.target.value)}
+                placeholder="Max"
+                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-sm tabular focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
+            <button
+              onClick={applyPriceFilter}
+              className="w-full mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primaryHover text-white text-sm font-semibold transition"
+            >
+              Apply
+            </button>
+          </div>
+        )}
+
+        {/* Active filters */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            {activeCategory && (
+              <FilterChip
+                label={activeCategory.name}
+                onRemove={() => setCategoryId("")}
+              />
+            )}
+            {minPrice && (
+              <FilterChip
+                label={`From ${rupiah(minPrice)}`}
+                onRemove={() => {
+                  setMinPrice("");
+                  setDraftMin("");
+                }}
+              />
+            )}
+            {maxPrice && (
+              <FilterChip
+                label={`Up to ${rupiah(maxPrice)}`}
+                onRemove={() => {
+                  setMaxPrice("");
+                  setDraftMax("");
+                }}
+              />
+            )}
+            <button
+              onClick={clearAll}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
+        {/* Heading */}
+        <div className="flex items-baseline justify-between mb-3">
+          <h1 className="text-xl font-bold text-textPrimary">
+            {search ? `Results for "${search}"` : "Explore"}
+          </h1>
+          {meta && (
+            <span className="text-sm text-textSecondary tabular">
+              {meta.total} item{meta.total === 1 ? "" : "s"}
+            </span>
           )}
-        </>
-      )}
+        </div>
+
+        {error && (
+          <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-4">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-surface border border-line rounded-xl overflow-hidden">
+                <div className="aspect-square bg-ink-100 animate-pulse" />
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-ink-100 rounded animate-pulse" />
+                  <div className="h-3 bg-ink-100 rounded w-2/3 animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="bg-surface border border-line rounded-xl p-12 text-center">
+            <p className="text-textSecondary text-sm mb-2">
+              Nothing matches that{search ? ` search` : " yet"}.
+            </p>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={clearAll}
+                className="text-primary text-sm font-semibold hover:underline"
+              >
+                Clear the filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div
+              className={
+                view === "grid"
+                  ? "grid grid-cols-2 md:grid-cols-4 gap-3"
+                  : "flex flex-col gap-3"
+              }
+            >
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} view={view} />
+              ))}
+            </div>
+
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full mt-5 py-3 rounded-xl border border-line bg-surface text-sm font-semibold text-textPrimary hover:bg-ink-100 transition disabled:opacity-60"
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
+            )}
+
+            <p className="text-center text-xs text-textMuted mt-4">
+              Showing {products.length} of {meta?.total ?? products.length}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Back to top */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
+        className="fixed bottom-20 right-4 md:bottom-6 h-10 w-10 rounded-full bg-surface border border-line text-textSecondary shadow-sm flex items-center justify-center hover:bg-ink-100 transition"
+      >
+        <ArrowUp size={18} />
+      </button>
     </div>
   );
 }
 
-function PageNumbers({ meta, onGoToPage, disabled }) {
-  const { current_page, last_page } = meta;
+function FilterChip({ label, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-ink-100 text-textSecondary text-xs rounded-full pl-3 pr-2 py-1.5">
+      {label}
+      <button
+        onClick={onRemove}
+        aria-label={`Remove ${label} filter`}
+        className="hover:text-textPrimary transition"
+      >
+        <X size={13} />
+      </button>
+    </span>
+  );
+}
 
-  const start = Math.max(1, current_page - 2);
-  const end = Math.min(last_page, start + 4);
-
-  const pages = [];
-  for (let i = start; i <= end; i++) pages.push(i);
+function ProductCard({ product, view }) {
+  const isList = view === "list";
 
   return (
-    <div className="flex items-center gap-1 flex-wrap justify-center">
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onGoToPage(p)}
-          disabled={disabled}
-          className={`w-8 h-8 rounded-lg text-sm transition disabled:opacity-40 disabled:cursor-not-allowed ${
-            p === current_page
-              ? "bg-primary text-white"
-              : "bg-black/5 border border-black/10 hover:bg-black/10 text-textPrimary"
-          }`}
-        >
-          {p}
-        </button>
-      ))}
-    </div>
+    <Link
+      to={`/products/${product.id}`}
+      className={`bg-surface border border-line rounded-xl overflow-hidden hover:border-lineStrong transition ${
+        isList ? "flex gap-3" : ""
+      }`}
+    >
+      <div
+        className={`bg-ink-100 shrink-0 relative ${
+          isList ? "w-28 aspect-square" : "aspect-square w-full"
+        }`}
+      >
+        {product.seller?.shop?.city && (
+          <span className="absolute top-2 left-2 bg-surface/95 backdrop-blur text-[10px] font-semibold uppercase tracking-wide text-textPrimary px-2 py-0.5 rounded-full">
+            {product.seller.shop.city}
+          </span>
+        )}
+        {product.thumbnail ? (
+          <img
+            src={product.thumbnail}
+            alt={product.title}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-textMuted text-xs">
+            No image
+          </div>
+        )}
+      </div>
+
+      <div className="p-3 flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <p className="text-[11px] uppercase tracking-wide text-textMuted truncate">
+            {product.seller?.shop?.name || product.seller?.name}
+          </p>
+          {Number(product.rating) > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-[11px] text-textSecondary shrink-0">
+              <Star size={11} className="text-primary fill-primary" />
+              <span className="tabular">{Number(product.rating).toFixed(1)}</span>
+            </span>
+          )}
+        </div>
+
+        <p className="text-sm text-textPrimary line-clamp-2 mb-1.5">
+          {product.title}
+        </p>
+
+        <p className="text-sm font-bold text-primary tabular">
+          {rupiah(product.price)}
+        </p>
+
+        {product.stock <= 5 && product.stock > 0 && (
+          <p className="text-[11px] text-warning mt-1">
+            Only {product.stock} left
+          </p>
+        )}
+        {product.stock === 0 && (
+          <p className="text-[11px] text-textMuted mt-1">Sold out</p>
+        )}
+      </div>
+    </Link>
   );
 }
