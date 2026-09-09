@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api/Client";
-import { ArrowRight, Star, Store, ShieldCheck, Package } from "lucide-react";
+import { ArrowRight, Store, ShieldCheck, Package } from "lucide-react";
+import ProductCard from "../components/organisms/ProductCard";
 
 const rupiah = (value) =>
   "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
@@ -46,7 +47,7 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-12">
 
       {/* Hero */}
-      <section className="px-4 pt-20 pb-6">
+      <section className="px-4 pt-20 pb-6 md:pt-24">
         <div className="max-w-5xl mx-auto">
           <div className="rounded-2xl bg-surface border border-line p-6 md:p-10">
             <span className="inline-flex items-center gap-2 rounded-full bg-ink-100 px-3 py-1 mb-4">
@@ -258,59 +259,13 @@ function ProductRail({ title, href, products, loading }) {
             ))}
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
-            {products.map((product) => (
-              <Link
-                key={product.id}
-                to={`/products/${product.id}`}
-                className="shrink-0 w-40 bg-surface border border-line rounded-xl overflow-hidden hover:border-lineStrong transition"
-              >
-                <div className="aspect-square bg-ink-100 relative">
-                  {product.seller?.shop?.city && (
-                    <span className="absolute top-2 left-2 bg-surface/95 backdrop-blur text-[10px] font-semibold uppercase tracking-wide text-textPrimary px-2 py-0.5 rounded-full">
-                      {product.seller.shop.city}
-                    </span>
-                  )}
-                  {product.thumbnail ? (
-                    <img
-                      src={product.thumbnail}
-                      alt={product.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-textMuted text-xs">
-                      No image
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+                {products.map((product) => (
+                    <div key={product.id} className="shrink-0 w-40 flex">
+                        <ProductCard product={product} to={`/products/${product.id}`} />
                     </div>
-                  )}
-                </div>
-
-                <div className="p-3">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-[11px] uppercase tracking-wide text-textMuted truncate">
-                      {product.seller?.shop?.name || product.seller?.name}
-                    </p>
-                    {Number(product.rating) > 0 && (
-                      <span className="inline-flex items-center gap-0.5 text-[11px] text-textSecondary shrink-0">
-                        <Star size={11} className="text-primary fill-primary" />
-                        <span className="tabular">
-                          {Number(product.rating).toFixed(1)}
-                        </span>
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-textPrimary line-clamp-2 mb-1.5">
-                    {product.title}
-                  </p>
-
-                  <p className="text-sm font-bold text-primary tabular">
-                    {rupiah(product.price)}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+                ))}
+            </div>
         )}
       </div>
     </section>

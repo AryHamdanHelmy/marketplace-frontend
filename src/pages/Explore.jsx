@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/Client";
+import ProductCard from "../components/organisms/ProductCard";
 import {
-  SlidersHorizontal, LayoutGrid, List, Star, X, ChevronDown, ArrowUp,
+  SlidersHorizontal, LayoutGrid, List, X, ChevronDown, ArrowUp,
 } from "lucide-react";
 
 const PER_PAGE = 12;
@@ -345,7 +346,7 @@ export default function Explore() {
               }
             >
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} view={view} />
+                <ProductCard key={product.id} product={product} view={view} to={`/product/${product.id}`} />
               ))}
             </div>
 
@@ -393,70 +394,3 @@ function FilterChip({ label, onRemove }) {
   );
 }
 
-function ProductCard({ product, view }) {
-  const isList = view === "list";
-
-  return (
-    <Link
-      to={`/products/${product.id}`}
-      className={`bg-surface border border-line rounded-xl overflow-hidden hover:border-lineStrong transition ${
-        isList ? "flex gap-3" : ""
-      }`}
-    >
-      <div
-        className={`bg-ink-100 shrink-0 relative ${
-          isList ? "w-28 aspect-square" : "aspect-square w-full"
-        }`}
-      >
-        {product.seller?.shop?.city && (
-          <span className="absolute top-2 left-2 bg-surface/95 backdrop-blur text-[10px] font-semibold uppercase tracking-wide text-textPrimary px-2 py-0.5 rounded-full">
-            {product.seller.shop.city}
-          </span>
-        )}
-        {product.thumbnail ? (
-          <img
-            src={product.thumbnail}
-            alt={product.title}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-textMuted text-xs">
-            No image
-          </div>
-        )}
-      </div>
-
-      <div className="p-3 flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-[11px] uppercase tracking-wide text-textMuted truncate">
-            {product.seller?.shop?.name || product.seller?.name}
-          </p>
-          {Number(product.rating) > 0 && (
-            <span className="inline-flex items-center gap-0.5 text-[11px] text-textSecondary shrink-0">
-              <Star size={11} className="text-primary fill-primary" />
-              <span className="tabular">{Number(product.rating).toFixed(1)}</span>
-            </span>
-          )}
-        </div>
-
-        <p className="text-sm text-textPrimary line-clamp-2 mb-1.5">
-          {product.title}
-        </p>
-
-        <p className="text-sm font-bold text-primary tabular">
-          {rupiah(product.price)}
-        </p>
-
-        {product.stock <= 5 && product.stock > 0 && (
-          <p className="text-[11px] text-warning mt-1">
-            Only {product.stock} left
-          </p>
-        )}
-        {product.stock === 0 && (
-          <p className="text-[11px] text-textMuted mt-1">Sold out</p>
-        )}
-      </div>
-    </Link>
-  );
-}

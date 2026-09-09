@@ -131,17 +131,16 @@
     :root { --tabbar-h: 0px; }
 }
 
-/* Safari on iOS zooms into any field smaller than 16px, and after a rotate it
-   doesn't zoom back out. Sizing form controls at 16px on small screens avoids
-   both, without touching the design on desktop. */
-@media (max-width: 767px) {
-    input,
-    select,
-    textarea {
-        font-size: 16px;
-    }
-}
 
 html {
     -webkit-text-size-adjust: 100%;
+}
+/* Safari and Chrome on iOS zoom into any field under 16px. This sits outside
+   every @layer so it beats Tailwind's text-sm utility. */
+@media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
 }

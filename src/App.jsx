@@ -26,6 +26,7 @@ import ShopSettings from "./pages/ShopSettings";
 import AdminWithdrawals from "./pages/AdminWithdrawals";
 import SellerBalance from "./pages/SellerBalance";
 import Home from "./pages/Home";
+import ProductDetail from "./pages/ProductDetail";
 
 // The storefront shell. Auth pages deliberately sit outside this so the
 // navbar, search, and cart don't appear while someone is signing in.
@@ -53,6 +54,7 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<Explore />} />
+          <Route path="/product/:id" element={<ProductDetail/>} />
 
           <Route
             path="/cart"
