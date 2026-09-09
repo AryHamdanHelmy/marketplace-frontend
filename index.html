@@ -2,9 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>marketplace-frontend</title>
+
+    <link rel="icon" type="image/svg+xml" href="/rapaku.svg" />
+    <meta name="theme-color" content="#DE4B2E" />
+
+    <title>Rapaku — Open your shop</title>
+    <meta
+      name="description"
+      content="Rapaku is a marketplace for Indonesian makers. One gate, every shop."
+    />
+
+    <!-- Social preview. og-image.png is 1200x630 and lives in /public. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rapaku — Open your shop" />
+    <meta
+      property="og:description"
+      content="A marketplace for Indonesian makers. One gate, every shop."
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Plus Jakarta Sans is made in Jakarta, which is where the name comes
+         from. Preconnect first so the fonts don't block first paint. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>
