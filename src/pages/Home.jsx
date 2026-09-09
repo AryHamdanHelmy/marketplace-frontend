@@ -47,7 +47,7 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-12">
 
       {/* Hero */}
-      <section className="px-4 pt-20 pb-6 md:pt-24">
+      <section className="px-4 pt-20 pb-6">
         <div className="max-w-5xl mx-auto">
           <div className="rounded-2xl bg-surface border border-line p-6 md:p-10">
             <span className="inline-flex items-center gap-2 rounded-full bg-ink-100 px-3 py-1 mb-4">
@@ -259,13 +259,13 @@ function ProductRail({ title, href, products, loading }) {
             ))}
           </div>
         ) : (
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
-                {products.map((product) => (
-                    <div key={product.id} className="shrink-0 w-40 flex">
-                        <ProductCard product={product} to={`/products/${product.id}`} />
-                    </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+              {products.map((product) => (
+                <div key={product.id} className="shrink-0 w-40">
+                    <ProductCard product={product} to={`/product/${product.id}`} />
+                </div>
                 ))}
-            </div>
+          </div>
         )}
       </div>
     </section>

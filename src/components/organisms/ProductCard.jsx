@@ -92,7 +92,7 @@ export default function ProductCard({ product, to, onClick, view = "grid" }) {
           )}
         </div>
 
-        <p className="text-sm text-textPrimary line-clamp-2 mb-1.5">
+        <p className="text-sm text-textPrimary line-clamp-1 mb-1.5">
           {product.title}
         </p>
 
