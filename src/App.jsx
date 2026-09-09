@@ -27,6 +27,10 @@ import AdminWithdrawals from "./pages/AdminWithdrawals";
 import SellerBalance from "./pages/SellerBalance";
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
+import Payment from "./pages/Payment";
+import Account from "./pages/Account";
+import ScrollToTop from "./components/ScrollToTop";
+
 
 // The storefront shell. Auth pages deliberately sit outside this so the
 // navbar, search, and cart don't appear while someone is signing in.
@@ -43,6 +47,7 @@ function MainLayout() {
 export default function App() {
   return (
     <SellerNavProvider>
+      <ScrollToTop/>
       <Routes>
         {/* Auth — no chrome */}
         <Route path="/login" element={<Auth />} />
@@ -55,6 +60,15 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/product/:id" element={<ProductDetail/>} />
+
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <Account />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/cart"
@@ -85,6 +99,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <OrderSuccess />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment/:groupId"
+            element={
+              <ProtectedRoute>
+                <Payment />
               </ProtectedRoute>
             }
           />

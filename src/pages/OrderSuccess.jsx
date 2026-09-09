@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
-import { CheckCircle } from "lucide-react";
+import { CircleCheck, ArrowRight } from "lucide-react";
 
 export default function OrderSuccess() {
     const { groupId } = useParams();
@@ -21,16 +21,16 @@ export default function OrderSuccess() {
             <div className="max-w-3xl mx-auto">
 
                 {loading && (
-                    <div className="bg-white border border-line rounded-xl p-10">
-                        <div className="h-6 bg-surface rounded w-1/3 mx-auto mb-4 animate-pulse" />
-                        <div className="h-24 bg-surface rounded animate-pulse" />
+                    <div className="bg-surface border border-line rounded-xl p-10">
+                        <div className="h-6 bg-ink-100 rounded w-1/3 mx-auto mb-4 animate-pulse" />
+                        <div className="h-24 bg-ink-100 rounded animate-pulse" />
                     </div>
                 )}
 
                 {!loading && error && (
-                    <div className="bg-white border border-line rounded-xl p-10 text-center">
+                    <div className="bg-surface border border-line rounded-xl p-10 text-center">
                         <p className="text-danger text-sm mb-3">Error: {error}</p>
-                        <Link to="/orders" className="text-textPrimary text-sm hover:underline">
+                        <Link to="/orders" className="text-primary text-sm font-semibold hover:underline">
                             View my orders →
                         </Link>
                     </div>
@@ -39,50 +39,61 @@ export default function OrderSuccess() {
                 {!loading && !error && order && (
                     <>
                         {/* Success header */}
-                        <div className="bg-white border border-line rounded-xl p-8 text-center mb-6">
-                            <div className="w-14 h-14 rounded-full bg-surface flex items-center justify-center mx-auto mb-4">
-                                <CheckCircle size={28} className="text-success" />
+                        <div className="bg-surface border border-line rounded-xl p-8 text-center mb-4">
+                            <div className="w-14 h-14 rounded-2xl bg-successSoft flex items-center justify-center mx-auto mb-4">
+                                <CircleCheck size={28} className="text-success" />
                             </div>
                             <h1 className="text-xl font-bold text-textPrimary mb-1">
-                                Order Placed Successfully
+                                Order placed
                             </h1>
-                            <p className="text-sm text-gray-400 mb-4">
+                            <p className="text-sm text-textSecondary mb-4">
                                 {transactions.length > 1
-                                    ? `Your order was split into ${transactions.length} separate orders, one per seller.`
-                                    : "Your order has been received and is awaiting payment."}
+                                    ? `Split into ${transactions.length} orders, one per seller. You pay once for all of them.`
+                                    : "Your order is waiting for payment."}
                             </p>
-                            <p className="text-2xl font-bold text-textPrimary">
+                            <p className="text-2xl font-bold text-textPrimary tabular">
                                 {formatPrice(order.grand_total)}
                             </p>
                         </div>
+
+                        {/* Payment is the next step, so it leads. Leaving the
+                            buyer on "view my orders" strands them here with an
+                            unpaid order and no obvious way forward. */}
+                        <Link
+                            to={`/payment/${groupId}`}
+                            className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primaryHover text-white font-semibold rounded-full py-3.5 mb-6 transition"
+                        >
+                            Pay now
+                            <ArrowRight size={18} />
+                        </Link>
 
                         {/* Daftar transaksi */}
                         <div className="flex flex-col gap-4 mb-6">
                             {transactions.map((trx) => (
                                 <div
                                     key={trx.id}
-                                    className="bg-white border border-line rounded-xl overflow-hidden"
+                                    className="bg-surface border border-line rounded-xl overflow-hidden"
                                 >
                                     {/* Header */}
-                                    <div className="px-5 py-3 bg-surface border-b border-line flex items-center justify-between gap-3">
+                                    <div className="px-5 py-3 bg-surfaceAlt border-b border-line flex items-center justify-between gap-3">
                                         <div className="min-w-0">
                                             <p className="text-sm font-semibold text-textPrimary truncate">
                                                 {trx.seller_name}
                                             </p>
-                                            <p className="text-xs text-gray-400 font-mono mt-0.5">
+                                            <p className="text-xs text-textSecondary font-mono mt-0.5">
                                                 {trx.invoice_number}
                                             </p>
                                         </div>
-                                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-600 capitalize shrink-0">
+                                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-warningSoft text-warning capitalize shrink-0">
                                             {trx.status}
                                         </span>
                                     </div>
 
                                     {/* Items */}
-                                    <div className="divide-y divide-gray-50">
+                                    <div className="divide-y divide-line">
                                         {trx.items.map((item, i) => (
                                             <div key={i} className="flex gap-3 px-5 py-3">
-                                                <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                                <div className="w-12 h-12 rounded-lg bg-ink-100 overflow-hidden shrink-0">
                                                     {item.thumbnail ? (
                                                         <img
                                                             src={item.thumbnail}
@@ -90,7 +101,7 @@ export default function OrderSuccess() {
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
+                                                        <div className="w-full h-full flex items-center justify-center text-textMuted text-[10px]">
                                                             No img
                                                         </div>
                                                     )}
@@ -99,11 +110,11 @@ export default function OrderSuccess() {
                                                     <p className="text-sm text-textPrimary truncate">
                                                         {item.product_name}
                                                     </p>
-                                                    <p className="text-xs text-gray-400 mt-0.5">
+                                                    <p className="text-xs text-textSecondary mt-0.5">
                                                         {formatPrice(item.price)} × {item.quantity}
                                                     </p>
                                                 </div>
-                                                <p className="text-sm font-semibold text-textPrimary shrink-0">
+                                                <p className="text-sm font-semibold text-textPrimary shrink-0 tabular">
                                                     {formatPrice(item.subtotal)}
                                                 </p>
                                             </div>
@@ -111,11 +122,11 @@ export default function OrderSuccess() {
                                     </div>
 
                                     {/* Footer */}
-                                    <div className="px-5 py-3 bg-surface border-t border-line flex items-center justify-between">
+                                    <div className="px-5 py-3 bg-surfaceAlt border-t border-line flex items-center justify-between">
                                         <span className="text-xs text-textSecondary capitalize">
                                             {trx.payment?.method?.replace("_", " ")}
                                         </span>
-                                        <span className="text-sm font-bold text-textPrimary">
+                                        <span className="text-sm font-bold text-textPrimary tabular">
                                             {formatPrice(trx.total_amount)}
                                         </span>
                                     </div>
@@ -123,19 +134,19 @@ export default function OrderSuccess() {
                             ))}
                         </div>
 
-                        {/* Actions */}
+                        {/* Secondary actions */}
                         <div className="flex flex-col md:flex-row gap-3">
                             <Link
                                 to="/orders"
-                                className="flex-1 text-center bg-primary hover:bg-primaryHover text-white font-semibold rounded-full py-3 transition"
+                                className="flex-1 text-center border border-lineStrong text-textPrimary font-semibold rounded-full py-3 hover:bg-ink-100 transition"
                             >
-                                View My Orders
+                                View my orders
                             </Link>
                             <Link
                                 to="/explore"
-                                className="flex-1 text-center border border-line text-textPrimary font-semibold rounded-full py-3 hover:bg-surface transition"
+                                className="flex-1 text-center border border-lineStrong text-textPrimary font-semibold rounded-full py-3 hover:bg-ink-100 transition"
                             >
-                                Continue Shopping
+                                Continue shopping
                             </Link>
                         </div>
                     </>

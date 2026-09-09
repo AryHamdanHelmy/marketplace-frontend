@@ -145,6 +145,9 @@ export default function NavbarMobile({
                                 <Link to="/orders" className={sheetLink}>
                                     <Receipt size={18} /> My Orders
                                 </Link>
+                                <Link to="/account" className={sheetLink}>
+                                    <User size={18} /> Account settings
+                                </Link>
                                 {isSeller && (
                                     <>
                                         <Link to="/seller/dashboard" className={sheetLink}>
