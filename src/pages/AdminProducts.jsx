@@ -53,55 +53,55 @@ export default function AdminProducts() {
     const draftProducts = allProducts.filter((p) => p.status === "draft").length;
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 px-5 pb-12 md:px-8">
+        <div className="min-h-screen bg-background pt-24 px-5 pb-12 md:px-8">
             <div className="max-w-6xl mx-auto">
 
                 {/* Header */}
                 <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-darkblue">Product Management</h1>
-                        <p className="text-sm text-gray-400 mt-0.5">Manage all products across all sellers.</p>
+                        <h1 className="text-2xl font-bold text-textPrimary">Product Management</h1>
+                        <p className="text-sm text-textSecondary mt-0.5">Manage all products across all sellers.</p>
                     </div>
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-1">Total</p>
-                        <p className="text-2xl font-bold text-darkblue">{totalProducts}</p>
+                    <div className="bg-surface border border-line rounded-xl p-4 shadow-sm">
+                        <p className="text-xs text-textSecondary uppercase font-semibold tracking-wide mb-1">Total</p>
+                        <p className="text-2xl font-bold text-textPrimary">{totalProducts}</p>
                     </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-1">Active</p>
-                        <p className="text-2xl font-bold text-emerald-600">{activeProducts}</p>
+                    <div className="bg-surface border border-line rounded-xl p-4 shadow-sm">
+                        <p className="text-xs text-textSecondary uppercase font-semibold tracking-wide mb-1">Active</p>
+                        <p className="text-2xl font-bold text-success">{activeProducts}</p>
                     </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-1">Draft</p>
-                        <p className="text-2xl font-bold text-gray-400">{draftProducts}</p>
+                    <div className="bg-surface border border-line rounded-xl p-4 shadow-sm">
+                        <p className="text-xs text-textSecondary uppercase font-semibold tracking-wide mb-1">Draft</p>
+                        <p className="text-2xl font-bold text-textSecondary">{draftProducts}</p>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <div className="flex flex-col md:flex-row gap-3 px-5 py-4 border-b border-gray-100">
+                <div className="bg-surface border border-line rounded-xl shadow-sm overflow-hidden">
+                    <div className="flex flex-col md:flex-row gap-3 px-5 py-4 border-b border-line">
                         {/* Search */}
-                        <div className="flex items-center gap-2 flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                            <Search size={14} className="text-gray-400 shrink-0" />
+                        <div className="flex items-center gap-2 flex-1 bg-surface border border-line rounded-lg px-3 py-2">
+                            <Search size={14} className="text-textSecondary shrink-0" />
                             <input
                                 type="text"
                                 placeholder="Search by product name or seller..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="bg-transparent text-sm text-darkblue outline-none flex-1 placeholder-gray-400"
+                                className="bg-transparent text-sm text-textPrimary outline-none flex-1 placeholder-gray-400"
                             />
                         </div>
 
                         {/* Status filter */}
                         <div className="flex items-center gap-2">
-                            <Filter size={14} className="text-gray-400 shrink-0" />
+                            <Filter size={14} className="text-textSecondary shrink-0" />
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="text-sm text-darkblue border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 outline-none focus:ring-2 focus:ring-pastel-blue transition"
+                                className="text-sm text-textPrimary border border-line rounded-lg px-3 py-2 bg-surface outline-none focus:ring-2 focus:ring-primary transition"
                             >
                                 <option value="all">All Status</option>
                                 <option value="active">Active</option>
@@ -112,8 +112,8 @@ export default function AdminProducts() {
                     </div>
 
                     {/* Table header */}
-                    <div className="px-5 py-2.5 bg-gray-50 border-b border-gray-100">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    <div className="px-5 py-2.5 bg-surface border-b border-line">
+                        <p className="text-xs font-bold text-textSecondary uppercase tracking-widest">
                             {filtered.length} product{filtered.length !== 1 ? "s" : ""} found
                         </p>
                     </div>
@@ -122,26 +122,26 @@ export default function AdminProducts() {
                     {loading && (
                         <div className="flex flex-col gap-3 p-5">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+                                <div key={i} className="h-14 bg-surface rounded-lg animate-pulse" />
                             ))}
                         </div>
                     )}
 
                     {/* Error */}
                     {!loading && error && (
-                        <p className="text-red-400 text-sm p-5">Error: {error}</p>
+                        <p className="text-danger text-sm p-5">Error: {error}</p>
                     )}
 
                     {/* Empty */}
                     {!loading && !error && filtered.length === 0 && (
-                        <p className="text-gray-400 text-sm p-8 text-center">No products found.</p>
+                        <p className="text-textSecondary text-sm p-8 text-center">No products found.</p>
                     )}
 
                     {/* Table */}
                     {!loading && !error && filtered.length > 0 && (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-50 text-gray-400 uppercase text-xs tracking-wide border-b border-gray-100">
+                                <thead className="bg-surface text-textSecondary uppercase text-xs tracking-wide border-b border-line">
                                     <tr>
                                         <th className="px-5 py-3 font-semibold">Product</th>
                                         <th className="px-5 py-3 font-semibold">Seller</th>
@@ -152,18 +152,18 @@ export default function AdminProducts() {
                                         <th className="px-5 py-3 font-semibold text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-50">
+                                <tbody className="divide-y divide-line">
                                     {filtered.map((product) => (
                                         <tr
                                             key={product.id}
-                                            className={`hover:bg-gray-50 transition-opacity ${
+                                            className={`hover:bg-surface transition-opacity ${
                                                 deletingId === product.id ? "opacity-40" : "opacity-100"
                                             }`}
                                         >
                                             {/* Product */}
                                             <td className="px-5 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                                    <div className="w-10 h-10 rounded-lg bg-surface overflow-hidden shrink-0">
                                                         {product.thumbnail ? (
                                                             <img
                                                                 src={product.thumbnail}
@@ -171,16 +171,16 @@ export default function AdminProducts() {
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">
+                                                            <div className="w-full h-full flex items-center justify-center text-shadow-textMuted text-label">
                                                                 No img
                                                             </div>
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="font-semibold text-darkblue truncate max-w-[180px]">
+                                                        <p className="font-semibold text-textPrimary truncate max-w-45">
                                                             {product.title}
                                                         </p>
-                                                        <p className="text-xs text-gray-400 font-mono">
+                                                        <p className="text-xs text-textSecondary font-mono">
                                                             PRD-{String(product.id).padStart(3, "0")}
                                                         </p>
                                                     </div>
@@ -189,17 +189,17 @@ export default function AdminProducts() {
 
                                             {/* Seller */}
                                             <td className="px-5 py-3">
-                                                <p className="text-sm text-darkblue">{product.seller?.name || "-"}</p>
+                                                <p className="text-sm text-textPrimary">{product.seller?.name || "-"}</p>
                                             </td>
 
                                             {/* Category */}
                                             <td className="px-5 py-3">
-                                                <p className="text-sm text-gray-500">{product.category?.name || "-"}</p>
+                                                <p className="text-sm text-textMuted">{product.category?.name || "-"}</p>
                                             </td>
 
                                             {/* Price */}
                                             <td className="px-5 py-3">
-                                                <p className="text-sm font-semibold text-darkblue">
+                                                <p className="text-sm font-semibold text-textPrimary">
                                                     {formatPrice(product.price)}
                                                 </p>
                                             </td>
@@ -219,7 +219,7 @@ export default function AdminProducts() {
                                                 <div className="flex items-center justify-end gap-3">
                                                     <button
                                                         onClick={() => navigate(`/seller/products/${product.id}/edit`)}
-                                                        className="text-gray-400 hover:text-pastel-blue transition"
+                                                        className="text-textSecondary hover:text-primary transition"
                                                         aria-label="Edit"
                                                         title="Edit product"
                                                     >
@@ -228,7 +228,7 @@ export default function AdminProducts() {
                                                     <button
                                                         onClick={() => handleDelete(product.id)}
                                                         disabled={deletingId === product.id}
-                                                        className="text-gray-400 hover:text-red-500 transition disabled:opacity-40"
+                                                        className="text-textSecondary hover:text-danger transition disabled:opacity-40"
                                                         aria-label="Delete"
                                                         title="Delete product"
                                                     >
@@ -251,20 +251,20 @@ export default function AdminProducts() {
 function StockBadge({ stock }) {
     if (stock <= 0) {
         return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-dangerSoft text-danger">
                 Out ({stock ?? 0})
             </span>
         );
     }
     if (stock <= 5) {
         return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-dangerSoft text-primary">
                 Low ({stock})
             </span>
         );
     }
     return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-successSoft text-success">
             {stock}
         </span>
     );
@@ -272,12 +272,12 @@ function StockBadge({ stock }) {
 
 function StatusBadge({ status }) {
     const map = {
-        active:   "bg-emerald-100 text-emerald-700",
-        draft:    "bg-gray-100 text-gray-500",
-        inactive: "bg-red-100 text-red-500",
+        active:   "bg-successSoft text-success",
+        draft:    "bg-surface text-textMute",
+        inactive: "bg-dangerSoft text-danger",
     };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${map[status] || "bg-gray-100 text-gray-400"}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${map[status] || "bg-surface text-textSecondary"}`}>
             {status}
         </span>
     );

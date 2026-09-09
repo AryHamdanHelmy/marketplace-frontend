@@ -44,21 +44,21 @@ export default function Users() {
         }
     }
     return (
-        <div className="min-h-screen text-darkblue pt-24 px-6 py-12">
+        <div className="min-h-screen text-textPrimary pt-24 px-6 py-12">
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-2xl font-semibold mb-6">User List</h1>
 
                 {/* Loading text cuma muncul pas belum ada data sama sekali (first load) */}
                 {loading && users.length === 0 && (
-                    <p className="text-gray-400">Load user data...</p>
+                    <p className="text-textSecondary">Load user data...</p>
                 )}
 
                 {!loading && error && (
-                    <p className="text-red-400">Error: {error}</p>
+                    <p className="text-danger">Error: {error}</p>
                 )}
 
                 {!loading && !error && users.length === 0 && (
-                    <p className="text-gray-400">No users found.</p>
+                    <p className="text-textSecondary">No users found.</p>
                 )}
 
                 {/* Tabel tetap tampil selama ada data, gak peduli status loading -
@@ -66,37 +66,37 @@ export default function Users() {
                 {users.length > 0 && (
                     <>
                         <div
-                            className={`overflow-x-auto bg-white rounded-lg border-2 border-black/50 transition-opacity ${
+                            className={`overflow-x-auto bg-surface rounded-lg border-2 border-line transition-opacity ${
                                 loading ? "opacity-50 pointer-events-none" : "opacity-100"
                             }`}
                         >
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-darkblue/90">
+                                <thead className="bg-surface">
                                     <tr>
-                                        <th className="px-4 py-3 font-medium text-pastel-green">No.</th>
-                                        <th className="px-4 py-3 font-medium text-pastel-green">Name</th>
-                                        <th className="px-4 py-3 font-medium text-pastel-green">Role</th>
-                                        <th className="px-4 py-3 font-medium text-pastel-green text-right">
+                                        <th className="px-4 py-3 font-medium text-textMuted">No.</th>
+                                        <th className="px-4 py-3 font-medium text-textMuted">Name</th>
+                                        <th className="px-4 py-3 font-medium text-textMuted">Role</th>
+                                        <th className="px-4 py-3 font-medium text-textMuted text-right">
                                             Detail
                                         </th>
-                                        <th className="px-4 py-3 font-medium text-pastel-green">Delete</th>
+                                        <th className="px-4 py-3 font-medium text-textMuted">Delete</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {users.map((user, idx) => (
                                         <tr
                                             key={user.id ?? idx}
-                                            className="border-t border-white/10 hover:bg-white/5"
+                                            className="border-t border-line hover:bg-surfaceAlt"
                                         >
-                                            <td className="px-4 py-3 text-darkblue">
+                                            <td className="px-4 py-3 text-textPrimary">
                                                 {meta ? (meta.current_page - 1) * meta.per_page + idx + 1 : idx + 1}
                                             </td>
-                                            <td className="px-4 py-3 text-darkblue">{user.name}</td>
-                                            <td className="px-4 py-3 text-darkblue">{user.role}</td>
+                                            <td className="px-4 py-3 text-textPrimary">{user.name}</td>
+                                            <td className="px-4 py-3 text-textPrimary">{user.role}</td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link
                                                     to={`/users/${user.id}`}
-                                                    className="text-pastelgreen hover:underline"
+                                                    className="text-success hover:underline"
                                                 >Show
                                                 </Link>
                                             </td>
@@ -104,7 +104,7 @@ export default function Users() {
                                                 <button
                                                     onClick={() => handleDelete(user.id, user.name)}
                                                     disabled={deletingId === user.id}
-                                                    className="text-red-400 hover:text-red-300 text-xs font-semibold disabled:opacity-50"
+                                                    className="text-primary hover:text-danger text-xs font-semibold disabled:opacity-50"
                                                 >
                                                     {deletingId === user.id ? "Deleting..." : "Delete"}
                                                 </button>
@@ -116,7 +116,7 @@ export default function Users() {
                         </div>
 
                         {meta && (
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4 text-sm text-black">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4 text-sm text-textPrimary">
                                 <p className="text-center md:text-left">
                                     Page {meta.current_page} of {meta.last_page} — {meta.total} users total
                                 </p>
@@ -125,7 +125,7 @@ export default function Users() {
                                     <button
                                         onClick={() => goToPage(meta.current_page - 1)}
                                         disabled={meta.current_page <= 1 || loading}
-                                        className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        className="px-3 py-1.5 rounded-lg bg-surface border border-line hover:bg-primaryHover disabled:opacity-40 disabled:cursor-not-allowed transition"
                                     >
                                         ← Prev
                                     </button>
@@ -135,7 +135,7 @@ export default function Users() {
                                     <button
                                         onClick={() => goToPage(meta.current_page + 1)}
                                         disabled={meta.current_page >= meta.last_page || loading}
-                                        className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                        className="px-3 py-1.5 rounded-lg bg-surface border border-line hover:bg-primaryHover disabled:opacity-40 disabled:cursor-not-allowed transition"
                                     >
                                         Next →
                                     </button>
@@ -168,8 +168,8 @@ function PageNumbers({ meta, onGoToPage, disabled }) {
                     disabled={disabled}
                     className={`w-8 h-8 rounded-lg text-sm transition disabled:opacity-40 disabled:cursor-not-allowed ${
                         p === current_page
-                            ? "bg-pastel-blue text-white"
-                            : "bg-black/5 border border-black/10 hover:bg-black/10 text-black"
+                            ? "bg-primary text-white"
+                            : "bg-black/5 border border-line hover:bg-primaryHover text-textPrimary"
                     }`}
                 >
                     {p}

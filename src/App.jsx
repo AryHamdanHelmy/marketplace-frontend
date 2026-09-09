@@ -29,6 +29,7 @@ import SellerOrders from "./pages/SellerOrders";
 import ProductImport from "./pages/ProductImport";
 import ShopSettings from "./pages/ShopSettings";
 import AdminWithdrawals from "./pages/AdminWithdrawals";
+import SellerBalance from "./pages/SellerBalance";
 
 function Home() {
   return (
@@ -151,6 +152,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["seller", "admin"]}>
                 <EditProduct />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/seller/balance"
+            element={
+              <ProtectedRoute allowedRoles={["seller"]}>
+                <SellerBalance />
               </ProtectedRoute>
             }
           />

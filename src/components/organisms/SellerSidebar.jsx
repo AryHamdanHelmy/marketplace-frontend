@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-    LayoutDashboard, PlusCircle, Store, ShoppingBag, Upload, X, Settings
+    LayoutDashboard, PlusCircle, Store, ShoppingBag, Upload, X, Settings, Wallet
 } from "lucide-react";
 import { useSellerNav } from "../../context/SellerNavContext";
 
@@ -10,6 +10,7 @@ const navItems = [
     { label: "Add Product", to: "/seller/products/new",    icon: PlusCircle },
     { label: "Mass Upload", to: "/seller/products/import", icon: Upload },
     { label: "Shop Settings",to: "/seller/store",        icon: Settings},
+    { label: "Balance",to: "/seller/balance",        icon: Wallet},
 ];
 
 export default function SellerSidebar() {

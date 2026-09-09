@@ -33,7 +33,7 @@ export default function Explore() {
   };
 
   return (
-    <div className="min-h-screen bg-hitam text-textPrimary pt-24 px-5 pb-12 md:px-25">
+    <div className="min-h-screen bg-background text-textPrimary pt-24 px-5 pb-12 md:px-25">
       <h1 className="text-2xl font-semibold mb-2">
         {search ? `Results for "${search}"` : "Explore Products"}
       </h1>
@@ -47,7 +47,7 @@ export default function Explore() {
       )}
 
       {!loading && error && (
-        <p className="text-red-400 mt-6">Error: {error}</p>
+        <p className="text-danger mt-6">Error: {error}</p>
       )}
 
       {!loading && !error && products.length === 0 && (
@@ -92,7 +92,7 @@ export default function Explore() {
                 <button
                   onClick={() => goToPage(meta.current_page + 1)}
                   disabled={meta.current_page >= meta.last_page || loading}
-                  className="px-3 py-1.5 rounded-lg bg-pastel-cyan/20 border border-pastel-cyan/35 hover:bg-pastel-cyan/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/35 hover:bg-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   Next →
                 </button>
@@ -123,7 +123,7 @@ function PageNumbers({ meta, onGoToPage, disabled }) {
           disabled={disabled}
           className={`w-8 h-8 rounded-lg text-sm transition disabled:opacity-40 disabled:cursor-not-allowed ${
             p === current_page
-              ? "bg-indigo-600 text-white"
+              ? "bg-primary text-white"
               : "bg-black/5 border border-black/10 hover:bg-black/10 text-textPrimary"
           }`}
         >

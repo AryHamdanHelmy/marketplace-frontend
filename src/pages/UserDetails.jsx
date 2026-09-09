@@ -61,25 +61,25 @@ export default function UsersDetail() {
     }, [id]);
 
     return (
-        <div className="min-h-screen bg-background text-darkblue pt-24 px-6 py-12">
+        <div className="min-h-screen bg-background text-textPrimary pt-24 px-6 py-12">
             <div className="max-w-lg mx-auto">
                 <Link
                     to="/users"
-                    className="text-sm text-pastel-blue hover:underline mb-6 inline-block"
+                    className="text-sm text-primary hover:underline mb-6 inline-block"
                 >
                     ← Back to user list
                 </Link>
                 <h1 className="text-2xl font-semibold mb-6">Detail User</h1>
 
-                {loading && <p className="text-black">Load data...</p>}
+                {loading && <p className="text-textPrimary">Load data...</p>}
 
                 {!loading && error && (
-                    <p className="text-red-400">Error: {error}</p>
+                    <p className="text-danger">Error: {error}</p>
                 )}
 
                 {!loading && !error && user && (
                     <>
-                        <div className="rounded-lg border border-black bg-black/5 divide-y divide-black mb-8">
+                        <div className="rounded-lg border border-line bg-black/5 divide-y divide-line mb-8">
                             <DetailRow label="ID" value={user.id} />
                             <DetailRow label="Name" value={user.name} />
                             <DetailRow label="Email" value={user.email} />
@@ -94,18 +94,18 @@ export default function UsersDetail() {
                                 </h2>
 
                                 {products.length === 0 ? (
-                                    <p className="text-gray-400 text-sm">
+                                    <p className="text-textSecondary text-sm">
                                         Belum ada produk terdaftar.
                                     </p>
                                 ) : (
-                                    <div className="rounded-lg border border-black/10 divide-y divide-black/10">
+                                    <div className="rounded-lg border border-line/40 divide-y divide-line/20">
                                         {products.map((p) => (
                                             <div
                                                 key={p.id}
                                                 className="flex justify-between px-4 py-3 text-sm"
                                             >
-                                                <span className="text-gray-100">{p.title}</span>
-                                                <span className="text-gray-400">
+                                                <span className="text-textPrimary">{p.title}</span>
+                                                <span className="text-textSecondary">
                                                     {p.price ? `Rp${Number(p.price).toLocaleString("id-ID")}` : "-"}
                                                 </span>
                                             </div>
@@ -124,8 +124,8 @@ export default function UsersDetail() {
 function DetailRow({ label, value }) {
     return (
         <div className="flex justify-between px-4 py-3 text-sm">
-            <span className="text-black">{label}</span>
-            <span className="text-black">{value ?? "-"}</span>
+            <span className="text-textPrimary">{label}</span>
+            <span className="text-textPrimary">{value ?? "-"}</span>
         </div>
     );
 }
