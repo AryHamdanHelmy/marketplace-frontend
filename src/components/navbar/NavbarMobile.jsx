@@ -153,7 +153,7 @@ export default function NavbarMobile({
                                         <Link to="/seller/dashboard" className={sheetLink}>
                                             <Store size={18} /> Seller Center
                                         </Link>
-                                        <Link to="/seller/settings" className={sheetLink}>
+                                        <Link to="/seller/store" className={sheetLink}>
                                             <Wallet size={18} /> Shop Settings
                                         </Link>
                                     </>
