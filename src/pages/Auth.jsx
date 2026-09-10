@@ -120,7 +120,7 @@ export default function Auth() {
       const role = data.user?.role;
       const destination =
         role === "seller" ? "/seller/dashboard" :
-        role === "admin"  ? "/users" :
+        role === "admin"  ? "/" :
         "/explore";
 
       setTimeout(() => navigate(destination), 900);
