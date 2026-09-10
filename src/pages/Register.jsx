@@ -203,7 +203,7 @@ export default function Register() {
             >
               <ArrowLeft size={20} />
             </button>
-            <img src={logoFull} alt="Rapaku" className="h-5 w-auto" />
+            <img src={logoFull} alt="Rapaku" className="h-6 w-auto" />
             <Link
               to="/explore"
               className="text-sm text-textSecondary hover:text-textPrimary transition"
@@ -240,11 +240,6 @@ export default function Register() {
 
           {/* Heading */}
           <div className="mt-6 md:mt-4 text-center md:text-left">
-            <img
-              src={logoFull}
-              alt=""
-              className="mx-auto h-12 w-auto rounded-xl bg-background p-2 md:hidden"
-            />
             <h1 className="mt-6 md:mt-0 text-display text-textPrimary">
               {step === 1 ? "Start your Rapaku story." : "How will you use Rapaku?"}
             </h1>
