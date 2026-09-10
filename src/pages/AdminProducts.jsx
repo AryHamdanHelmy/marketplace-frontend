@@ -1,236 +1,274 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useFetch } from "../hooks/useFetch";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../api/Client";
-import { Pencil, Trash2, Search, Filter } from "lucide-react";
+import { Pencil, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PER_PAGE = 20;
+
+const STATUS_STYLE = {
+    active:   "bg-successSoft text-success",
+    draft:    "bg-ink-100 text-textSecondary",
+    inactive: "bg-dangerSoft text-danger",
+};
+
+const rupiah = (value) =>
+    "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
 
 export default function AdminProducts() {
     const navigate = useNavigate();
-    const { data, loading, error, setData } = useFetch("/products?status=all", []);
-    const [deletingId, setDeletingId] = useState(null);
+
+    const [products, setProducts] = useState([]);
+    const [meta, setMeta] = useState(null);
+    const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
-    const allProducts = Array.isArray(data) ? data : data?.data || [];
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [deletingId, setDeletingId] = useState(null);
 
-    // Filter by search & status
-    const filtered = allProducts.filter((p) => {
-        const matchSearch =
-            p.title?.toLowerCase().includes(search.toLowerCase()) ||
-            p.seller?.name?.toLowerCase().includes(search.toLowerCase());
-        const matchStatus =
-            statusFilter === "all" || p.status === statusFilter;
-        return matchSearch && matchStatus;
-    });
+    // Typing shouldn't fire a request per keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1);
+        }, 400);
 
-    const formatPrice = (value) =>
-        new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-        }).format(value ?? 0);
+        return () => clearTimeout(timer);
+    }, [search]);
 
-    const handleDelete = async (productId) => {
-        if (!window.confirm("Delete this product? This action cannot be undone.")) return;
-        setDeletingId(productId);
+    const load = useCallback(async () => {
+        setLoading(true);
+        setError("");
+
+        const params = new URLSearchParams({
+            status: statusFilter,
+            page,
+            per_page: PER_PAGE,
+        });
+
+        if (debouncedSearch) params.set("search", debouncedSearch);
+
         try {
-            await apiRequest(`/products/${productId}`, { method: "DELETE" });
-            setData((prev) => {
-                const source = Array.isArray(prev) ? prev : prev.data;
-                const updated = source.filter((p) => p.id !== productId);
-                return Array.isArray(prev) ? updated : { ...prev, data: updated };
-            });
+            const res = await apiRequest(`/products?${params}`);
+            setProducts(res.data || []);
+            setMeta(res.meta || null);
         } catch (err) {
-            alert(err.message || "Failed to delete product");
+            setError(err.message || "Couldn't load products.");
+        } finally {
+            setLoading(false);
+        }
+    }, [statusFilter, page, debouncedSearch]);
+
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    const handleDelete = async (product) => {
+        if (!window.confirm(`Delete "${product.title}"? This can't be undone.`)) return;
+
+        setDeletingId(product.id);
+        setError("");
+
+        try {
+            await apiRequest(`/products/${product.id}`, { method: "DELETE" });
+            setProducts((prev) => prev.filter((p) => p.id !== product.id));
+            setMeta((prev) => (prev ? { ...prev, total: prev.total - 1 } : prev));
+        } catch (err) {
+            setError(err.message || "Couldn't delete that product.");
         } finally {
             setDeletingId(null);
         }
     };
 
-    // Stats
-    const totalProducts = allProducts.length;
-    const activeProducts = allProducts.filter((p) => p.status === "active").length;
-    const draftProducts = allProducts.filter((p) => p.status === "draft").length;
-
     return (
-        <div className="min-h-screen bg-background pt-24 px-5 pb-12 md:px-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-background pt-24 px-4 pb-12">
+            <div className="max-w-5xl mx-auto">
 
-                {/* Header */}
-                <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-textPrimary">Product Management</h1>
-                        <p className="text-sm text-textSecondary mt-0.5">Manage all products across all sellers.</p>
+                <h1 className="text-2xl font-bold text-textPrimary mb-1">Products</h1>
+                <p className="text-sm text-textSecondary mb-5">
+                    Every product across every shop.
+                </p>
+
+                {error && (
+                    <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-4">
+                        {error}
                     </div>
+                )}
+
+                {/* Search and filter. Both run on the server, so the counts and
+                    results cover the whole catalogue rather than one page. */}
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                    <div className="flex items-center gap-2 flex-1 bg-surface border border-line rounded-lg px-3">
+                        <Search size={15} className="text-textMuted shrink-0" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search products"
+                            className="flex-1 bg-transparent py-2.5 text-base text-textPrimary outline-none placeholder:text-textMuted"
+                        />
+                    </div>
+
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                            setStatusFilter(e.target.value);
+                            setPage(1);
+                        }}
+                        className="bg-surface border border-line rounded-lg px-3 py-2.5 text-base text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                        <option value="all">All status</option>
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-surface border border-line rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-textSecondary uppercase font-semibold tracking-wide mb-1">Total</p>
-                        <p className="text-2xl font-bold text-textPrimary">{totalProducts}</p>
-                    </div>
-                    <div className="bg-surface border border-line rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-textSecondary uppercase font-semibold tracking-wide mb-1">Active</p>
-                        <p className="text-2xl font-bold text-success">{activeProducts}</p>
-                    </div>
-                    <div className="bg-surface border border-line rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-textSecondary uppercase font-semibold tracking-wide mb-1">Draft</p>
-                        <p className="text-2xl font-bold text-textSecondary">{draftProducts}</p>
-                    </div>
-                </div>
+                <p className="text-xs text-textSecondary mb-3">
+                    {meta ? (
+                        <>
+                            <span className="tabular">{meta.total}</span> product
+                            {meta.total === 1 ? "" : "s"}
+                        </>
+                    ) : (
+                        "\u00A0"
+                    )}
+                </p>
 
-                {/* Filters */}
-                <div className="bg-surface border border-line rounded-xl shadow-sm overflow-hidden">
-                    <div className="flex flex-col md:flex-row gap-3 px-5 py-4 border-b border-line">
-                        {/* Search */}
-                        <div className="flex items-center gap-2 flex-1 bg-surface border border-line rounded-lg px-3 py-2">
-                            <Search size={14} className="text-textSecondary shrink-0" />
-                            <input
-                                type="text"
-                                placeholder="Search by product name or seller..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="bg-transparent text-sm text-textPrimary outline-none flex-1 placeholder-gray-400"
+                {loading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div
+                                key={i}
+                                className="h-16 bg-surface border border-line rounded-xl animate-pulse"
                             />
-                        </div>
-
-                        {/* Status filter */}
-                        <div className="flex items-center gap-2">
-                            <Filter size={14} className="text-textSecondary shrink-0" />
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="text-sm text-textPrimary border border-line rounded-lg px-3 py-2 bg-surface outline-none focus:ring-2 focus:ring-primary transition"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="draft">Draft</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
+                        ))}
                     </div>
-
-                    {/* Table header */}
-                    <div className="px-5 py-2.5 bg-surface border-b border-line">
-                        <p className="text-xs font-bold text-textSecondary uppercase tracking-widest">
-                            {filtered.length} product{filtered.length !== 1 ? "s" : ""} found
+                ) : products.length === 0 ? (
+                    <div className="bg-surface border border-line rounded-xl p-12 text-center">
+                        <p className="text-sm text-textSecondary">
+                            Nothing matches that.
                         </p>
                     </div>
+                ) : (
+                    <>
+                        {/* Mobile: cards. A seven-column table on a phone means
+                            scrolling sideways to reach the actions. */}
+                        <div className="space-y-3 md:hidden">
+                            {products.map((product) => (
+                                <div
+                                    key={product.id}
+                                    className={`bg-surface border border-line rounded-xl p-4 transition-opacity ${
+                                        deletingId === product.id ? "opacity-50" : ""
+                                    }`}
+                                >
+                                    <div className="flex gap-3">
+                                        <Thumb product={product} />
 
-                    {/* Loading */}
-                    {loading && (
-                        <div className="flex flex-col gap-3 p-5">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="h-14 bg-surface rounded-lg animate-pulse" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-textPrimary line-clamp-2">
+                                                {product.title}
+                                            </p>
+                                            <p className="text-xs text-textSecondary mt-0.5 truncate">
+                                                {product.seller?.shop?.name || product.seller?.name || "—"}
+                                            </p>
+                                            <p className="text-sm font-bold text-primary tabular mt-1">
+                                                {rupiah(product.price)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 pt-3 border-t border-line flex items-center gap-2">
+                                        <StatusBadge status={product.status} />
+                                        <StockBadge stock={product.stock} />
+
+                                        <div className="ml-auto flex gap-1">
+                                            <button
+                                                onClick={() => navigate(`/seller/products/${product.id}/edit`)}
+                                                aria-label={`Edit ${product.title}`}
+                                                className="p-2 rounded-lg text-textSecondary hover:text-primary hover:bg-ink-100 transition"
+                                            >
+                                                <Pencil size={15} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(product)}
+                                                disabled={deletingId === product.id}
+                                                aria-label={`Delete ${product.title}`}
+                                                className="p-2 rounded-lg text-textSecondary hover:text-danger hover:bg-dangerSoft transition disabled:opacity-40"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
                         </div>
-                    )}
 
-                    {/* Error */}
-                    {!loading && error && (
-                        <p className="text-danger text-sm p-5">Error: {error}</p>
-                    )}
-
-                    {/* Empty */}
-                    {!loading && !error && filtered.length === 0 && (
-                        <p className="text-textSecondary text-sm p-8 text-center">No products found.</p>
-                    )}
-
-                    {/* Table */}
-                    {!loading && !error && filtered.length > 0 && (
-                        <div className="overflow-x-auto">
+                        {/* Desktop: table */}
+                        <div className="hidden md:block bg-surface border border-line rounded-xl overflow-hidden">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-surface text-textSecondary uppercase text-xs tracking-wide border-b border-line">
+                                <thead className="bg-surfaceAlt border-b border-line">
                                     <tr>
-                                        <th className="px-5 py-3 font-semibold">Product</th>
-                                        <th className="px-5 py-3 font-semibold">Seller</th>
-                                        <th className="px-5 py-3 font-semibold">Category</th>
-                                        <th className="px-5 py-3 font-semibold">Price</th>
-                                        <th className="px-5 py-3 font-semibold">Stock</th>
-                                        <th className="px-5 py-3 font-semibold">Status</th>
-                                        <th className="px-5 py-3 font-semibold text-right">Actions</th>
+                                        <th className="px-4 py-3 text-label uppercase text-textSecondary">Product</th>
+                                        <th className="px-4 py-3 text-label uppercase text-textSecondary">Shop</th>
+                                        <th className="px-4 py-3 text-label uppercase text-textSecondary">Price</th>
+                                        <th className="px-4 py-3 text-label uppercase text-textSecondary">Stock</th>
+                                        <th className="px-4 py-3 text-label uppercase text-textSecondary">Status</th>
+                                        <th className="px-4 py-3 text-label uppercase text-textSecondary text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-line">
-                                    {filtered.map((product) => (
+                                    {products.map((product) => (
                                         <tr
                                             key={product.id}
-                                            className={`hover:bg-surface transition-opacity ${
-                                                deletingId === product.id ? "opacity-40" : "opacity-100"
+                                            className={`hover:bg-surfaceAlt transition ${
+                                                deletingId === product.id ? "opacity-40" : ""
                                             }`}
                                         >
-                                            {/* Product */}
-                                            <td className="px-5 py-3">
+                                            <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-surface overflow-hidden shrink-0">
-                                                        {product.thumbnail ? (
-                                                            <img
-                                                                src={product.thumbnail}
-                                                                alt={product.title}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-shadow-textMuted text-label">
-                                                                No img
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    <Thumb product={product} small />
                                                     <div className="min-w-0">
-                                                        <p className="font-semibold text-textPrimary truncate max-w-45">
+                                                        <Link
+                                                            to={`/products/${product.id}`}
+                                                            className="font-medium text-textPrimary hover:text-primary transition line-clamp-1"
+                                                        >
                                                             {product.title}
-                                                        </p>
-                                                        <p className="text-xs text-textSecondary font-mono">
+                                                        </Link>
+                                                        <p className="text-xs text-textMuted font-mono">
                                                             PRD-{String(product.id).padStart(3, "0")}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </td>
-
-                                            {/* Seller */}
-                                            <td className="px-5 py-3">
-                                                <p className="text-sm text-textPrimary">{product.seller?.name || "-"}</p>
+                                            <td className="px-4 py-3 text-textSecondary">
+                                                {product.seller?.shop?.name || product.seller?.name || "—"}
                                             </td>
-
-                                            {/* Category */}
-                                            <td className="px-5 py-3">
-                                                <p className="text-sm text-textMuted">{product.category?.name || "-"}</p>
+                                            <td className="px-4 py-3 font-semibold text-textPrimary tabular">
+                                                {rupiah(product.price)}
                                             </td>
-
-                                            {/* Price */}
-                                            <td className="px-5 py-3">
-                                                <p className="text-sm font-semibold text-textPrimary">
-                                                    {formatPrice(product.price)}
-                                                </p>
-                                            </td>
-
-                                            {/* Stock */}
-                                            <td className="px-5 py-3">
+                                            <td className="px-4 py-3">
                                                 <StockBadge stock={product.stock} />
                                             </td>
-
-                                            {/* Status */}
-                                            <td className="px-5 py-3">
+                                            <td className="px-4 py-3">
                                                 <StatusBadge status={product.status} />
                                             </td>
-
-                                            {/* Actions */}
-                                            <td className="px-5 py-3 text-right">
-                                                <div className="flex items-center justify-end gap-3">
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => navigate(`/seller/products/${product.id}/edit`)}
-                                                        className="text-textSecondary hover:text-primary transition"
-                                                        aria-label="Edit"
-                                                        title="Edit product"
+                                                        aria-label={`Edit ${product.title}`}
+                                                        className="p-2 rounded-lg text-textSecondary hover:text-primary hover:bg-ink-100 transition"
                                                     >
                                                         <Pencil size={15} />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(product.id)}
+                                                        onClick={() => handleDelete(product)}
                                                         disabled={deletingId === product.id}
-                                                        className="text-textSecondary hover:text-danger transition disabled:opacity-40"
-                                                        aria-label="Delete"
-                                                        title="Delete product"
+                                                        aria-label={`Delete ${product.title}`}
+                                                        className="p-2 rounded-lg text-textSecondary hover:text-danger hover:bg-dangerSoft transition disabled:opacity-40"
                                                     >
                                                         <Trash2 size={15} />
                                                     </button>
@@ -241,44 +279,105 @@ export default function AdminProducts() {
                                 </tbody>
                             </table>
                         </div>
-                    )}
-                </div>
+
+                        {meta && meta.last_page > 1 && (
+                            <div className="flex items-center justify-between gap-3 mt-5">
+                                <p className="text-xs text-textSecondary">
+                                    Page {meta.current_page} of {meta.last_page}
+                                </p>
+                                <div className="flex gap-1.5">
+                                    <PageButton
+                                        onClick={() => setPage((p) => p - 1)}
+                                        disabled={meta.current_page <= 1}
+                                        label="Previous page"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </PageButton>
+                                    <PageButton
+                                        onClick={() => setPage((p) => p + 1)}
+                                        disabled={meta.current_page >= meta.last_page}
+                                        label="Next page"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </PageButton>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
 }
 
+function Thumb({ product, small }) {
+    const size = small ? "w-10 h-10" : "w-16 h-16";
+
+    return (
+        <div className={`${size} rounded-lg bg-ink-100 overflow-hidden shrink-0`}>
+            {product.thumbnail ? (
+                <img
+                    src={product.thumbnail}
+                    alt={product.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center text-textMuted text-[10px]">
+                    No img
+                </div>
+            )}
+        </div>
+    );
+}
+
 function StockBadge({ stock }) {
-    if (stock <= 0) {
+    const value = stock ?? 0;
+
+    if (value <= 0) {
         return (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-dangerSoft text-danger">
-                Out ({stock ?? 0})
+                Out of stock
             </span>
         );
     }
-    if (stock <= 5) {
+
+    if (value <= 5) {
         return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-dangerSoft text-primary">
-                Low ({stock})
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warningSoft text-warning tabular">
+                {value} left
             </span>
         );
     }
+
     return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-successSoft text-success">
-            {stock}
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-successSoft text-success tabular">
+            {value}
         </span>
     );
 }
 
 function StatusBadge({ status }) {
-    const map = {
-        active:   "bg-successSoft text-success",
-        draft:    "bg-surface text-textMute",
-        inactive: "bg-dangerSoft text-danger",
-    };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${map[status] || "bg-surface text-textSecondary"}`}>
+        <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                STATUS_STYLE[status] || "bg-ink-100 text-textSecondary"
+            }`}
+        >
             {status}
         </span>
+    );
+}
+
+function PageButton({ children, onClick, disabled, label }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            className="h-9 w-9 flex items-center justify-center rounded-lg bg-surface border border-line text-textSecondary hover:bg-ink-100 hover:text-textPrimary transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+            {children}
+        </button>
     );
 }

@@ -1,131 +1,230 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { apiRequest } from "../api/Client";
+import {
+    ArrowLeft, Shield, Store, ShoppingBag, Package, MapPin,
+} from "lucide-react";
 
-export default function UsersDetail() {
+const ROLE_STYLE = {
+    admin:  { className: "bg-accentSoft text-accent",     icon: Shield },
+    seller: { className: "bg-primarySoft text-primary",   icon: Store },
+    buyer:  { className: "bg-ink-100 text-textSecondary", icon: ShoppingBag },
+};
+
+const rupiah = (value) =>
+    "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
+
+export default function UserDetails() {
     const { id } = useParams();
 
     const [user, setUser] = useState(null);
     const [products, setProducts] = useState([]);
+    const [productMeta, setProductMeta] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         let ignore = false;
 
-        async function fetchUserAndProducts() {
+        (async () => {
+            setLoading(true);
+            setError(null);
+
             try {
-                setLoading(true);
-                setError(null);
+                const userRes = await apiRequest(`/users/${id}`);
+                const detail = userRes.data ?? userRes;
 
-                // Ambil detail user
-                const userData = await apiRequest(`/users/${id}`);
-                const userDetail = userData.data ?? userData;
+                if (ignore) return;
+                setUser(detail);
 
-                // Ambil semua produk, lalu filter yang seller_id-nya sama dengan user ini.
-                // (Dipakai kalau backend belum punya endpoint khusus /products?seller_id=)
-                let sellerProducts = [];
-                try {
-                    const productData = await apiRequest("/products");
-                    const productList = Array.isArray(productData)
-                        ? productData
-                        : productData.data ?? [];
-                    sellerProducts = productList.filter(
-                        (p) => String(p.seller?.id) === String(id)
-                    );
-                } catch (productErr) {
-                    // Kalau fetch produk gagal, jangan sampai gagalkan seluruh halaman.
-                    // Detail user tetap tampil, cuma daftar produknya kosong.
-                    console.error("Gagal memuat produk:", productErr.message);
-                }
-
-                if (!ignore) {
-                    setUser(userDetail);
-                    setProducts(sellerProducts);
+                // Filtered by the database, not by the browser. Fetching every
+                // product and filtering here only ever saw the first page.
+                if (detail.role === "seller") {
+                    try {
+                        const productRes = await apiRequest(
+                            `/products?seller_id=${id}&status=all&per_page=50`
+                        );
+                        if (!ignore) {
+                            setProducts(productRes.data || []);
+                            setProductMeta(productRes.meta || null);
+                        }
+                    } catch {
+                        // The product list is supporting detail. Losing it
+                        // shouldn't take down the profile above it.
+                    }
                 }
             } catch (err) {
-                if (!ignore) {
-                    setError(err.message || "Terjadi kesalahan saat memuat data");
-                }
+                if (!ignore) setError(err.message || "Couldn't load this user.");
             } finally {
-                if (!ignore) {
-                    setLoading(false);
-                }
+                if (!ignore) setLoading(false);
             }
-        }
+        })();
 
-        fetchUserAndProducts();
         return () => {
             ignore = true;
         };
     }, [id]);
 
+    const roleStyle = ROLE_STYLE[user?.role] || ROLE_STYLE.buyer;
+    const RoleIcon = roleStyle.icon;
+
     return (
-        <div className="min-h-screen bg-background text-textPrimary pt-24 px-6 py-12">
-            <div className="max-w-lg mx-auto">
+        <div className="min-h-screen bg-background text-textPrimary pt-24 px-4 pb-12">
+            <div className="max-w-2xl mx-auto">
+
                 <Link
                     to="/users"
-                    className="text-sm text-primary hover:underline mb-6 inline-block"
+                    className="inline-flex items-center gap-1.5 text-sm text-textSecondary hover:text-textPrimary transition mb-4"
                 >
-                    ← Back to user list
+                    <ArrowLeft size={16} />
+                    All users
                 </Link>
-                <h1 className="text-2xl font-semibold mb-6">Detail User</h1>
 
-                {loading && <p className="text-textPrimary">Load data...</p>}
+                {loading && <p className="text-sm text-textSecondary">Loading...</p>}
 
                 {!loading && error && (
-                    <p className="text-danger">Error: {error}</p>
+                    <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3">
+                        {error}
+                    </div>
                 )}
 
                 {!loading && !error && user && (
                     <>
-                        <div className="rounded-lg border border-line bg-black/5 divide-y divide-line mb-8">
-                            <DetailRow label="ID" value={user.id} />
-                            <DetailRow label="Name" value={user.name} />
-                            <DetailRow label="Email" value={user.email} />
-                            <DetailRow label="Role" value={user.role} />
+                        {/* Identity */}
+                        <div className="bg-surface border border-line rounded-xl p-5 mb-4">
+                            <div className="flex items-start gap-4">
+                                <span className="h-14 w-14 rounded-full bg-ink-100 text-textSecondary flex items-center justify-center shrink-0 text-xl font-semibold">
+                                    {user.name?.charAt(0)?.toUpperCase() || "?"}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <h1 className="text-heading text-textPrimary truncate">
+                                        {user.name}
+                                    </h1>
+                                    <p className="text-sm text-textSecondary truncate">
+                                        {user.email}
+                                    </p>
+                                    <span
+                                        className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${roleStyle.className}`}
+                                    >
+                                        <RoleIcon size={12} />
+                                        {user.role}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-line grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <p className="text-label uppercase text-textSecondary">
+                                        User ID
+                                    </p>
+                                    <p className="text-textPrimary tabular mt-0.5">{user.id}</p>
+                                </div>
+                                {user.role === "seller" && (
+                                    <div>
+                                        <p className="text-label uppercase text-textSecondary">
+                                            Products
+                                        </p>
+                                        <p className="text-textPrimary tabular mt-0.5">
+                                            {productMeta?.total ?? products.length}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Daftar produk cuma relevan buat seller */}
+                        {/* Shop */}
+                        {user.role === "seller" && products[0]?.seller?.shop && (
+                            <div className="bg-surface border border-line rounded-xl p-5 mb-4">
+                                <p className="text-label uppercase text-textSecondary mb-2">
+                                    Shop
+                                </p>
+                                <p className="text-sm font-semibold text-textPrimary">
+                                    {products[0].seller.shop.name}
+                                </p>
+                                {products[0].seller.shop.city && (
+                                    <p className="text-xs text-textSecondary inline-flex items-center gap-1 mt-1">
+                                        <MapPin size={11} />
+                                        {products[0].seller.shop.city}
+                                        {products[0].seller.shop.province
+                                            ? `, ${products[0].seller.shop.province}`
+                                            : ""}
+                                    </p>
+                                )}
+                                {products[0].seller.shop.is_open === false && (
+                                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-ink-100 text-textSecondary">
+                                        Closed
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Their catalogue */}
                         {user.role === "seller" && (
-                            <div>
-                                <h2 className="text-lg font-semibold mb-3">
-                                    Produk Terdaftar ({products.length})
-                                </h2>
+                            <div className="bg-surface border border-line rounded-xl overflow-hidden">
+                                <div className="px-5 py-4 border-b border-line flex items-center justify-between">
+                                    <h2 className="inline-flex items-center gap-2 text-base font-bold text-textPrimary">
+                                        <Package size={16} className="text-primary" />
+                                        Products
+                                    </h2>
+                                    <span className="text-sm text-textSecondary tabular">
+                                        {productMeta?.total ?? products.length}
+                                    </span>
+                                </div>
 
                                 {products.length === 0 ? (
-                                    <p className="text-textSecondary text-sm">
-                                        Belum ada produk terdaftar.
+                                    <p className="p-8 text-center text-sm text-textSecondary">
+                                        This seller hasn't listed anything yet.
                                     </p>
                                 ) : (
-                                    <div className="rounded-lg border border-line/40 divide-y divide-line/20">
-                                        {products.map((p) => (
-                                            <div
-                                                key={p.id}
-                                                className="flex justify-between px-4 py-3 text-sm"
+                                    <div className="divide-y divide-line">
+                                        {products.map((product) => (
+                                            <Link
+                                                key={product.id}
+                                                to={`/products/${product.id}`}
+                                                className="flex items-center gap-3 px-5 py-3 hover:bg-surfaceAlt transition"
                                             >
-                                                <span className="text-textPrimary">{p.title}</span>
-                                                <span className="text-textSecondary">
-                                                    {p.price ? `Rp${Number(p.price).toLocaleString("id-ID")}` : "-"}
-                                                </span>
-                                            </div>
+                                                <div className="w-11 h-11 rounded-lg bg-ink-100 overflow-hidden shrink-0">
+                                                    {product.thumbnail ? (
+                                                        <img
+                                                            src={product.thumbnail}
+                                                            alt={product.title}
+                                                            loading="lazy"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-textMuted text-[10px]">
+                                                            No img
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm text-textPrimary truncate">
+                                                        {product.title}
+                                                    </p>
+                                                    <p className="text-xs text-textSecondary mt-0.5 capitalize">
+                                                        {product.status} · {product.stock ?? 0} in stock
+                                                    </p>
+                                                </div>
+
+                                                <p className="text-sm font-semibold text-primary tabular shrink-0">
+                                                    {rupiah(product.price)}
+                                                </p>
+                                            </Link>
                                         ))}
                                     </div>
+                                )}
+
+                                {productMeta && productMeta.total > products.length && (
+                                    <p className="px-5 py-3 text-xs text-textSecondary bg-surfaceAlt border-t border-line">
+                                        Showing {products.length} of {productMeta.total}.
+                                    </p>
                                 )}
                             </div>
                         )}
                     </>
                 )}
             </div>
-        </div>
-    );
-}
-
-function DetailRow({ label, value }) {
-    return (
-        <div className="flex justify-between px-4 py-3 text-sm">
-            <span className="text-textPrimary">{label}</span>
-            <span className="text-textPrimary">{value ?? "-"}</span>
         </div>
     );
 }

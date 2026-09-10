@@ -148,7 +148,7 @@ export default function Checkout() {
     };
 
     return (
-        <div className="min-h-screen bg-background pt-20 pb-32 px-4">
+        <div className="min-h-screen bg-background pt-20 pb-44 px-4">
             <div className="max-w-2xl mx-auto">
 
                 {/* Stepper */}
@@ -415,17 +415,17 @@ export default function Checkout() {
 
             {/* Sticky total */}
             <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-                <div className="max-w-2xl mx-auto flex items-center gap-3">
-                    <div className="min-w-0">
+                <div className="max-w-2xl mx-auto flex items-center gap-4">
+                    <div className="min-w-0 shrink-0">
                         <p className="text-label uppercase text-textSecondary">Total</p>
-                        <p className="text-lg font-bold text-primary tabular">
+                        <p className="text-lg font-bold text-primary tabular whitespace-nowrap">
                             {rupiah(total)}
                         </p>
                     </div>
                     <button
                         onClick={handleSubmit}
                         disabled={submitting || items.length === 0 || !addressId}
-                        className="flex-1 rounded-full bg-primary py-3 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 rounded-full mb-3 bg-primary py-3 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {submitting ? "Placing order..." : "Place order"}
                     </button>

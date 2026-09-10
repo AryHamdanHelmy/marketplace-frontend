@@ -264,7 +264,7 @@ export default function ProductDetail() {
               <button
                 onClick={handleBuyNow}
                 disabled={adding || soldOut}
-                className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50"
+                className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50"
               >
                 Buy now
               </button>
@@ -346,14 +346,14 @@ export default function ProductDetail() {
           onClick={handleAddToCart}
           disabled={adding || soldOut}
           aria-label="Add to cart"
-          className="shrink-0 inline-flex items-center justify-center rounded-lg border border-primary w-12 text-primary hover:bg-primarySoft transition disabled:opacity-50"
+          className="w-12 mb-3 shrink-0 inline-flex items-center justify-center rounded-xl border border-primary text-primary hover:bg-primarySoft transition disabled:opacity-50"
         >
           {added ? <Check size={18} /> : <ShoppingCart size={18} />}
         </button>
         <button
           onClick={handleBuyNow}
           disabled={adding || soldOut}
-          className="flex-1 rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50"
+          className="flex-1 rounded-full mb-3 bg-primary py-3 px-2 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50"
         >
           {soldOut ? "Sold out" : adding ? "Working..." : "Buy now"}
         </button>

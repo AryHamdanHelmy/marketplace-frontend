@@ -59,7 +59,7 @@ export default function SellerDashboard() {
             try {
                 const [balanceRes, productsRes] = await Promise.all([
                     apiRequest("/seller/balance"),
-                    apiRequest("/products?status=all&per_page=100"),
+                    apiRequest("/seller/products?status=all&per_page=100&mine=1"),
                 ]);
                 setBalance(balanceRes.data);
                 setProducts(productsRes.data || []);

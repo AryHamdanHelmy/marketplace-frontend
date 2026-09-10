@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useFetch } from "../hooks/useFetch";
 import { apiRequest } from "../api/Client";
 import SellerSidebar from "../components/organisms/SellerSidebar";
-import { Package, Truck, CircleCheck, Clock } from "lucide-react";
+import { Package, Truck, CircleCheck, Clock, MapPin } from "lucide-react";
 
 const CONFIRMATION_WINDOW_DAYS = 7;
 
@@ -166,6 +166,7 @@ export default function SellerOrders() {
                         <div className="flex flex-col gap-4">
                             {orders.map((order) => {
                                 const daysLeft = daysUntilAutoComplete(order.shipped_at);
+                                const address = order.shipping_address;
 
                                 return (
                                     <div
@@ -222,6 +223,37 @@ export default function SellerOrders() {
                                                 </div>
                                             ))}
                                         </div>
+
+                                        {/* Where it goes. Frozen onto the order at checkout, so
+                                            a buyer editing their address book later can't change
+                                            where a shipped parcel was sent. Orders placed before
+                                            addresses existed have none. */}
+                                        {address && (
+                                            <div className="px-5 py-3 border-t border-line">
+                                                <p className="inline-flex items-center gap-1.5 text-label uppercase text-textSecondary mb-1.5">
+                                                    <MapPin size={12} className="text-primary" />
+                                                    Deliver to
+                                                </p>
+                                                <p className="text-sm text-textPrimary">
+                                                    {address.recipient_name}
+                                                    <span className="text-textSecondary">
+                                                        {" · "}{address.phone}
+                                                    </span>
+                                                </p>
+                                                <p className="text-sm text-textSecondary mt-0.5 leading-relaxed">
+                                                    {address.street}
+                                                    {address.district ? `, ${address.district}` : ""}
+                                                    <br />
+                                                    {address.city}, {address.province}{" "}
+                                                    {address.postal_code}
+                                                </p>
+                                                {address.courier_note && (
+                                                    <p className="mt-2 text-xs text-textSecondary bg-ink-100 rounded-lg px-3 py-2">
+                                                        {address.courier_note}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Footer */}
                                         <div className="px-5 py-3 bg-surfaceAlt border-t border-line flex items-center justify-between">

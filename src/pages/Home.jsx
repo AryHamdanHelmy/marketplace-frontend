@@ -47,7 +47,7 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-12">
 
       {/* Hero */}
-      <section className="px-4 pt-20 pb-6">
+      <section className="px-4 pt-20 pb-6 md:pt-24">
         <div className="max-w-5xl mx-auto">
           <div className="rounded-2xl bg-surface border border-line p-6 md:p-10">
             <span className="inline-flex items-center gap-2 rounded-full bg-ink-100 px-3 py-1 mb-4">
