@@ -749,22 +749,22 @@ function AddressForm({ onSaved }) {
     // fields below fill themselves from it. They stay editable: the official
     // courier spelling and the one people actually use don't always match.
     const pickArea = (area) => {
-        setForm((prev) => ({
-            ...prev,
-            destination_area_id: area.id,
-            destination_area_label: area.label,
-            ...(id
-                ? {
-                    district: area.district || prev.district,
-                    city: area.city || prev.city,
-                    province: area.province || prev.province,
-                    postal_code: area.postal_code || prev.postal_code,
-                  }
-                : {}),
-        }));
+    setForm((prev) => ({
+        ...prev,
+        destination_area_id: area.id,
+        destination_area_label: area.label,
+        ...(area.id
+            ? {
+                  district: area.district || prev.district,
+                  city: area.city || prev.city,
+                  province: area.province || prev.province,
+                  postal_code: area.postal_code || prev.postal_code,
+              }
+            : {}),
+    }));
 
-        setErrors((prev) => ({ ...prev, destination_area_id: "" }));
-    };
+    setErrors((prev) => ({ ...prev, destination_area_id: "" }));
+};
 
     const save = async (e) => {
         e.preventDefault();
