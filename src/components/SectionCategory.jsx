@@ -61,7 +61,7 @@ export default function Categories() {
                                                 <img
                                                     src={cat.image_url}
                                                     alt={cat.name}
-                                                    className="w-full h-full object-contain"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             ) : (
                                                 <Icon size={40} className="text-textSecondary" strokeWidth={1.5} />

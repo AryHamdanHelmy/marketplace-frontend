@@ -25,7 +25,7 @@ const buildCategoryItems = (categories, limit = 8) => {
       (cat.children || []).map((child) => ({
         id: `sub-${child.id}`,
         name: child.name,
-        image_url: null, // children tidak punya image_url dari API
+        image_url: child.image_url ?? null, // children tidak punya image_url dari API
         icon: child.icon,
         href: `/explore?category_id=${cat.id}&subcategory_id=${child.id}`,
       }))
@@ -125,14 +125,14 @@ export default function Home() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   to="/explore"
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primaryHover transition"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-label font-semibold text-white hover:bg-primaryHover transition"
                 >
                   Start browsing
                   <ArrowRight size={17} />
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-2 rounded-full border border-lineStrong px-5 py-3 text-sm font-semibold text-textPrimary hover:bg-ink-100 transition"
+                  className="inline-flex items-center gap-2 rounded-full border border-lineStrong px-5 py-3 text-label font-semibold text-textPrimary hover:bg-ink-100 transition"
                 >
                   Open your shop
                 </Link>
@@ -152,9 +152,9 @@ export default function Home() {
                     alt={hero.title}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-textPrimary/85 to-transparent p-5">
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-textPrimary/95 to-transparent p-5">
                     {hero.seller?.shop?.city && (
-                      <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-white/80">
+                      <p className="inline-flex items-center gap-1 text-label uppercase tracking-wide text-white/80">
                         <MapPin size={10} />
                         {hero.seller.shop.city}
                       </p>
@@ -183,14 +183,14 @@ export default function Home() {
 
             {/* Phones keep the scrolling rail. Desktop gets a grid, because a
                 rail that fits on screen shouldn't pretend to scroll. */}
-            <div className="flex md:grid md:grid-cols-8 gap-4 overflow-x-auto md:overflow-visible scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-1">
-              {buildCategoryItems(categories, 8).map((item) => (
+            <div className="flex md:grid md:grid-cols-10 gap-1 overflow-x-auto md:overflow-visible scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-1">
+              {buildCategoryItems(categories, 20).map((item) => (
                 <Link
                     key={item.id}
                     to={item.href}
                     className="flex flex-col items-center gap-2 shrink-0 w-20 md:w-auto group"
                 >
-                    <span className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-surface border border-line overflow-hidden flex items-center justify-center group-hover:border-primary transition">
+                    <span className="h-12 w-12 md:h-20 md:w-20 rounded-2xl bg-surface/40 border border-line overflow-hidden flex items-center justify-center group-hover:border-primary transition">
                     {item.image_url ? (
                         <img
                         src={item.image_url}
@@ -202,7 +202,7 @@ export default function Home() {
                         <Package size={22} className="text-primary" />
                     )}
                     </span>
-                    <span className="text-xs text-textSecondary text-center leading-tight line-clamp-2 group-hover:text-textPrimary transition">
+                    <span className="text-label text-textSecondary text-center leading-tight line-clamp-2 group-hover:text-textPrimary transition">
                     {item.name}
                     </span>
                 </Link>

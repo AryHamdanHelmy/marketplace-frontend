@@ -3,10 +3,17 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../api/Client";
 import {
   ArrowLeft, Copy, Check, Clock, CircleCheck, TriangleAlert,
-  ShieldCheck, RefreshCw, Landmark,
+  ShieldCheck, RefreshCw, Landmark, QrCode, Smartphone, ExternalLink,
 } from "lucide-react";
 
 const POLL_INTERVAL_MS = 15000;
+
+// Which icon sits next to each method in the picker. Falls back to Landmark,
+// which is right for every virtual account and for manual transfer.
+const CHANNEL_ICON = {
+  qris: QrCode,
+  gopay: Smartphone,
+};
 
 const rupiah = (value) =>
   "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
@@ -112,6 +119,15 @@ export default function Payment() {
     }
   };
 
+  // Going back to the picker is a local state reset, not an API call. The old
+  // charge stays open at the provider until it lapses — harmless, and picking
+  // a method creates a fresh reference anyway.
+  const changeMethod = () => {
+    setSelected(payment?.channel || channels[0]?.code || "");
+    setPayment(null);
+    setError("");
+  };
+
   const refresh = async () => {
     setWorking(true);
     setError("");
@@ -192,20 +208,20 @@ export default function Payment() {
               <TriangleAlert size={26} />
             </span>
             <h1 className="text-heading text-textPrimary">
-                {payment.status === "expired"
-                    ? "This payment expired."
-                    : "This payment didn't go through."}
+              {payment.status === "expired"
+                ? "This payment expired."
+                : "This payment didn't go through."}
             </h1>
             <p className="mt-2 text-sm text-textSecondary">
-                {payment.status === "expired"
-                    ? "The order was cancelled and the items went back into stock. Add them to your cart again to reorder."
-                    : "No money was taken. You can start a new order whenever you're ready."}
+              {payment.status === "expired"
+                ? "The order was cancelled and the items went back into stock. Add them to your cart again to reorder."
+                : "No money was taken. You can start a new order whenever you're ready."}
             </p>
             <Link
-                to="/explore"
-                className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primaryHover transition"
+              to="/explore"
+              className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primaryHover transition"
             >
-                Browse products
+              Browse products
             </Link>
           </div>
         )}
@@ -219,47 +235,52 @@ export default function Payment() {
             </p>
 
             <div className="space-y-3 mb-5">
-              {channels.map((channel) => (
-                <button
-                  key={channel.code}
-                  onClick={() => setSelected(channel.code)}
-                  aria-pressed={selected === channel.code}
-                  className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
-                    selected === channel.code
-                      ? "border-primary bg-primarySoft"
-                      : "border-line bg-surface hover:border-lineStrong"
-                  }`}
-                >
-                  <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                      selected === channel.code
-                        ? "bg-primary text-white"
-                        : "bg-ink-100 text-textSecondary"
+              {channels.map((channel) => {
+                const Icon = CHANNEL_ICON[channel.code] || Landmark;
+                const active = selected === channel.code;
+
+                return (
+                  <button
+                    key={channel.code}
+                    onClick={() => setSelected(channel.code)}
+                    aria-pressed={active}
+                    className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
+                      active
+                        ? "border-primary bg-primarySoft"
+                        : "border-line bg-surface hover:border-lineStrong"
                     }`}
                   >
-                    <Landmark size={18} />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block font-semibold text-textPrimary">
-                      {channel.label}
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                        active
+                          ? "bg-primary text-white"
+                          : "bg-ink-100 text-textSecondary"
+                      }`}
+                    >
+                      <Icon size={18} />
                     </span>
-                    {channel.description && (
-                      <span className="mt-0.5 block text-sm text-textSecondary">
-                        {channel.description}
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-semibold text-textPrimary">
+                        {channel.label}
                       </span>
-                    )}
-                  </span>
-                  <span
-                    className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                      selected === channel.code
-                        ? "border-primary bg-primary text-white"
-                        : "border-lineStrong"
-                    }`}
-                  >
-                    {selected === channel.code && <Check size={12} strokeWidth={3} />}
-                  </span>
-                </button>
-              ))}
+                      {channel.description && (
+                        <span className="mt-0.5 block text-sm text-textSecondary">
+                          {channel.description}
+                        </span>
+                      )}
+                    </span>
+                    <span
+                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        active
+                          ? "border-primary bg-primary text-white"
+                          : "border-lineStrong"
+                      }`}
+                    >
+                      {active && <Check size={12} strokeWidth={3} />}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <button
@@ -291,12 +312,10 @@ export default function Payment() {
                 )}
               </div>
 
+              {/* Manual bank transfer — no provider connected */}
               {instructions?.type === "bank_transfer" && (
                 <div className="space-y-3">
-                  <Detail
-                    label="Bank"
-                    value={instructions.bank_name}
-                  />
+                  <Detail label="Bank" value={instructions.bank_name} />
                   <Detail
                     label="Account number"
                     value={instructions.account_number}
@@ -304,10 +323,7 @@ export default function Payment() {
                     copied={copied === "acc"}
                     mono
                   />
-                  <Detail
-                    label="Account holder"
-                    value={instructions.account_holder}
-                  />
+                  <Detail label="Account holder" value={instructions.account_holder} />
                   <Detail
                     label="Amount"
                     value={rupiah(instructions.amount)}
@@ -322,13 +338,100 @@ export default function Payment() {
                 </div>
               )}
 
-              {/* Other channels — QR, virtual account, redirect — render here
-                  once a real gateway driver is connected. */}
-              {instructions && instructions.type !== "bank_transfer" && (
-                <pre className="text-xs text-textSecondary overflow-x-auto">
-                  {JSON.stringify(instructions, null, 2)}
-                </pre>
+              {/* QRIS — one code, any Indonesian payment app */}
+              {instructions?.type === "qris" && (
+                <div>
+                  <QrImage src={instructions.qr_url} alt="QRIS code for this payment" />
+
+                  <p className="mt-4 text-sm text-textSecondary text-center leading-relaxed">
+                    Open GoPay, OVO, DANA, ShopeePay, or your banking app, choose{" "}
+                    <span className="font-semibold text-textPrimary">Scan QR</span>,
+                    and point it at this code.
+                  </p>
+
+                  {/* Scanning fails on the same phone that's showing the code,
+                      so the raw string is offered as a way out. */}
+                  {instructions.qr_string && (
+                    <button
+                      onClick={() => copy(instructions.qr_string, "qr")}
+                      className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line py-2.5 text-sm font-semibold text-textSecondary hover:bg-ink-100 transition"
+                    >
+                      {copied === "qr" ? <Check size={15} /> : <Copy size={15} />}
+                      {copied === "qr" ? "QR code copied" : "Copy QR code instead"}
+                    </button>
+                  )}
+                </div>
               )}
+
+              {/* GoPay — deeplink on mobile, QR on desktop */}
+              {instructions?.type === "gopay" && (
+                <div>
+                  {instructions.deeplink_url && (
+                    <a
+                      href={instructions.deeplink_url}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primaryHover transition"
+                    >
+                      <ExternalLink size={16} />
+                      Pay in the Gojek app
+                    </a>
+                  )}
+
+                  {instructions.qr_url && (
+                    <>
+                      <div className="my-4 flex items-center gap-3">
+                        <span className="h-px flex-1 bg-line" />
+                        <span className="text-xs uppercase tracking-wide text-textMuted">
+                          or scan
+                        </span>
+                        <span className="h-px flex-1 bg-line" />
+                      </div>
+
+                      <QrImage src={instructions.qr_url} alt="GoPay QR code" />
+                    </>
+                  )}
+
+                  <p className="mt-4 text-sm text-textSecondary text-center">
+                    Confirm the payment in Gojek. This page updates on its own.
+                  </p>
+                </div>
+              )}
+
+              {/* Virtual account */}
+              {instructions?.type === "virtual_account" && (
+                <div className="space-y-3">
+                  <Detail label="Bank" value={instructions.bank} />
+                  <Detail
+                    label="Virtual account"
+                    value={instructions.va_number}
+                    onCopy={() => copy(instructions.va_number, "va")}
+                    copied={copied === "va"}
+                    mono
+                  />
+                  <Detail
+                    label="Amount"
+                    value={rupiah(payment.amount)}
+                    onCopy={() => copy(Math.round(Number(payment.amount)), "amt")}
+                    copied={copied === "amt"}
+                    mono
+                  />
+
+                  <div className="bg-warningSoft text-warning text-sm rounded-lg px-3 py-2.5 leading-relaxed">
+                    Transfer the exact amount to this number. It belongs to this
+                    order only, so there's nothing to write in the description.
+                  </div>
+                </div>
+              )}
+
+              {/* A channel the backend offers but this page doesn't draw yet.
+                  Better a readable fallback than a blank card. */}
+              {instructions &&
+                !["bank_transfer", "qris", "gopay", "virtual_account"].includes(
+                  instructions.type
+                ) && (
+                  <pre className="text-xs text-textSecondary overflow-x-auto">
+                    {JSON.stringify(instructions, null, 2)}
+                  </pre>
+                )}
             </div>
 
             <button
@@ -338,6 +441,13 @@ export default function Payment() {
             >
               <RefreshCw size={15} className={working ? "animate-spin" : ""} />
               {working ? "Checking..." : "I've paid, check now"}
+            </button>
+
+            <button
+              onClick={changeMethod}
+              className="mt-2 w-full py-2 text-sm font-semibold text-textSecondary hover:text-textPrimary transition"
+            >
+              Use a different method
             </button>
 
             <p className="mt-3 text-xs text-textMuted text-center">
@@ -351,6 +461,35 @@ export default function Payment() {
           Sellers are paid only after you confirm the order arrived.
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The provider serves the QR as a plain image URL, so there's no QR library
+ * here. The white plate is deliberate and not themed — scanners struggle with
+ * a code drawn on cream and fail outright on a dark one.
+ */
+function QrImage({ src, alt }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <div className="rounded-xl border border-line bg-ink-100 p-6 text-center text-sm text-textSecondary">
+        The QR code didn't load. Tap "I've paid, check now" if you already paid,
+        or pick another method.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl bg-white p-4 mx-auto w-fit">
+      <img
+        src={src}
+        alt={alt}
+        onError={() => setFailed(true)}
+        className="h-56 w-56 object-contain"
+      />
     </div>
   );
 }
