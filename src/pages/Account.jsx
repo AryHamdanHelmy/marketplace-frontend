@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api/Client";
 import { useAuth } from "../context/AuthContext";
+import AreaPicker from "../components/AreaPicker";
 import {
     User, MapPin, Lock, Plus, Pencil, Trash2, Check, Star,
     Eye, EyeOff, Store, Receipt,
@@ -360,6 +361,12 @@ function AddressesTab({ notify }) {
     );
 }
 
+// Replaces the existing AddressForm function in src/pages/Account.jsx
+// (starts at line 363). Everything else in that file stays as it is.
+//
+// Add to the imports at the top of Account.jsx:
+//   import AreaPicker from "../components/AreaPicker";
+
 function AddressForm({ address, onSaved, onCancel }) {
     const [form, setForm] = useState({
         label: address?.label || "",
@@ -371,6 +378,8 @@ function AddressForm({ address, onSaved, onCancel }) {
         province: address?.province || "",
         postal_code: address?.postal_code || "",
         courier_note: address?.courier_note || "",
+        destination_area_id: address?.destination_area_id || "",
+        destination_area_label: address?.destination_area_label || "",
     });
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
@@ -380,8 +389,39 @@ function AddressForm({ address, onSaved, onCancel }) {
         setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
     };
 
+    // Picking an area fills the three text fields from the courier's own
+    // spelling. They still exist because printed labels and order history read
+    // from them, but nobody should have to type what the picker already knows —
+    // and a hand-typed "Tangsel" next to an area id that says Tangerang Selatan
+    // is the kind of mismatch that surfaces as a courier rejecting a parcel.
+    const pickArea = (area) => {
+    setForm((prev) => ({
+        ...prev,
+        destination_area_id: area.id,
+        destination_area_label: area.label,
+        ...(area.id
+            ? {
+                  district: area.district || prev.district,
+                  city: area.city || prev.city,
+                  province: area.province || prev.province,
+                  postal_code: area.postal_code || prev.postal_code,
+              }
+            : {}),
+        }));
+
+        setErrors((prev) => ({ ...prev, destination_area_id: "" }));
+    };
+
     const save = async (e) => {
         e.preventDefault();
+
+        // Caught here rather than at the server so the buyer sees it next to
+        // the field, not as a banner after a round trip.
+        if (!form.destination_area_id) {
+            setErrors({ destination_area_id: "Pick your delivery area so shipping can be calculated." });
+            return;
+        }
+
         setSaving(true);
         setErrors({});
 
@@ -429,8 +469,17 @@ function AddressForm({ address, onSaved, onCancel }) {
                 <input name="phone" inputMode="tel" value={form.phone} onChange={change} placeholder="08123456789" className={input(errors.phone)} />
             </Field>
 
+            {/* Sits above the street on purpose: choosing it fills the city and
+                province below, so doing it first means less typing. */}
+            <Field label="Delivery area" error={errors.destination_area_id}>
+                <AreaPicker
+                    value={{ id: form.destination_area_id, label: form.destination_area_label }}
+                    onChange={pickArea}
+                />
+            </Field>
+
             <Field label="Street address" error={errors.street}>
-                <textarea name="street" rows={2} value={form.street} onChange={change} className={input(errors.street) + " resize-y"} />
+                <textarea name="street" rows={2} value={form.street} onChange={change} placeholder="Street, number, RT/RW" className={input(errors.street) + " resize-y"} />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -468,7 +517,7 @@ function AddressForm({ address, onSaved, onCancel }) {
                     disabled={saving}
                     className="flex-1 rounded-full bg-primary py-2.5 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-60"
                 >
-                    {saving ? "Saving..." : "Save"}
+                    {saving ? "Saving..." : "Save address"}
                 </button>
             </div>
         </form>

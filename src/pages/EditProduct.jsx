@@ -44,6 +44,7 @@ export default function EditProduct() {
                 price: product.price ?? "",
                 stock: product.stock ?? "",
                 status: product.status ?? "draft",
+                weight_grams: product.weight_grams ?? "",
             });
             setExistingThumbnail(product.thumbnail ?? null);
         }
@@ -105,6 +106,10 @@ export default function EditProduct() {
             newErrors.price = "Enter a valid price";
         if (form.stock !== "" && Number(form.stock) < 0)
             newErrors.stock = "Stock cannot be negative";
+        if (form.status === "active" && !form.weight_grams)
+            newErrors.weight_grams = "Weight is needed before this can be sold";
+        if (form.weight_grams && Number(form.weight_grams) < 1)
+            newErrors.weight_grams = "Enter a weight in grams";
         return newErrors;
     };
 
@@ -127,6 +132,7 @@ export default function EditProduct() {
                 formData.append("stock", form.stock === "" ? 0 : Number(form.stock));
                 formData.append("status", form.status);
                 formData.append("thumbnail", newImage);
+                formData.append("weight_grams", form.weight_grams === "" ? "" : Number(form.weight_grams));
                 // PHP doesn't parse multipart bodies on PUT, so this goes out
                 // as POST and Laravel translates it back.
                 formData.append("_method", "PUT");
@@ -145,6 +151,7 @@ export default function EditProduct() {
                         price: Number(form.price),
                         stock: form.stock === "" ? 0 : Number(form.stock),
                         status: form.status,
+                        weight_grams: form.weight_grams === "" ? null : Number(form.weight_grams),
                     },
                 });
             }
@@ -317,7 +324,7 @@ export default function EditProduct() {
 
                                 {/* Price & Stock */}
                                 <Section title="Pricing & Stock">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <Field label="Price (Rp)" error={errors.price}>
                                             <input
                                                 type="number"
@@ -329,6 +336,28 @@ export default function EditProduct() {
                                                 className={inputClass(errors.price)}
                                             />
                                         </Field>
+                                        {form.status === "active" && !form.weight_grams && (
+                                        <p className="mb-2 text-xs text-warning">
+                                            Shipping is now priced by weight, so this needs filling in before
+                                            buyers can order it again.
+                                        </p>
+                                        )}
+                                        <Field label="Weight (grams)" error={errors.weight_grams}>
+                                            <input
+                                                type="number"
+                                                name="weight_grams"
+                                                value={form.weight_grams}
+                                                onChange={handleChange}
+                                                placeholder="500"
+                                                min="1"
+                                                className={inputClass(errors.weight_grams)}
+                                            />
+                                            <p className="mt-1 text-xs text-textSecondary">
+                                                {form.weight_grams && Number(form.weight_grams) >= 1000
+                                                ? `${(Number(form.weight_grams) / 1000).toFixed(1)} kg — couriers round up to the next kilo.`
+                                                : "Packed weight, including box and wrapping."}
+                                            </p>
+                                            </Field>
 
                                         <Field label="Stock" error={errors.stock}>
                                             <input

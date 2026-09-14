@@ -3,6 +3,7 @@ import { apiRequest } from "../api/Client";
 import SellerSidebar from "../components/organisms/SellerSidebar";
 import { Store, Landmark, Upload, Check, TriangleAlert } from "lucide-react";
 import { downscaleImage } from "../utils/image";
+import AreaPicker from "../components/AreaPicker";
 
 export default function ShopSettings() {
   const [loading, setLoading] = useState(true);
@@ -13,6 +14,8 @@ export default function ShopSettings() {
     description: "",
     city: "",
     province: "",
+    origin_area_id: "",
+    origin_area_label: "",
   });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -45,6 +48,8 @@ export default function ShopSettings() {
           description: res.data.description || "",
           city: res.data.city || "",
           province: res.data.province || "",
+          origin_area_id: res.data.origin_area_id || "",
+          origin_area_label: res.data.origin_area_label || "",
         });
         setPayout({
           bank_name: res.data.bank_name || "",
@@ -95,6 +100,8 @@ export default function ShopSettings() {
       formData.append("description", profile.description || "");
       formData.append("city", profile.city || "");
       formData.append("province", profile.province || "");
+      formData.append("origin_area_id", profile.origin_area_id || "");
+      formData.append("origin_area_label", profile.origin_area_label || "");
       if (logoFile) formData.append("logo", logoFile);
 
       // Laravel doesn't parse multipart bodies on PUT, so the request is sent
@@ -302,7 +309,29 @@ export default function ShopSettings() {
                 className={inputClass(false) + " resize-y"}
               />
             </Field>
-
+            <Field label="Pickup area" error={profileErrors.origin_area_id}>
+                <AreaPicker
+                  value={{
+                    id: profile.origin_area_id,
+                    label: profile.origin_area_label,
+                  }}
+                  onChange={(area) => {
+                    setProfile((prev) => ({
+                      ...prev,
+                      origin_area_id: area.id,
+                      origin_area_label: area.label,
+                      ...(area.id
+                        ? { city: area.city || prev.city, province: area.province || prev.province }
+                        : {}),
+                    }));
+                  }}
+                />
+                <p className="mt-1.5 text-xs text-textSecondary">
+                  Where couriers pick up from. Without this, buyers can't check out
+                  items from your shop — shipping has no starting point to price from.
+                </p>
+            </Field>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="City" error={profileErrors.city}>
                 <input

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
 import { apiRequest } from "../api/Client";
 import { PackageCheck } from "lucide-react";
+import TrackingPanel from "../components/TrackingPanel";
 
 const CONFIRMATION_WINDOW_DAYS = 7;
 
@@ -219,8 +220,14 @@ export default function MyOrders() {
                                         </div>
 
                                         <p className="text-lg font-bold text-textPrimary tabular">
-                                            {formatPrice(order.total_amount)}
+                                            {formatPrice(Number(order.total_amount) + Number(order.shipping_cost || 0))}
                                         </p>
+                                        {Number(order.shipping_cost) > 0 && (
+                                            <p className="text-xs text-textSecondary mt-0.5">
+                                                incl. {formatPrice(order.shipping_cost)} shipping
+                                            </p>
+                                        )}
+                                        <TrackingPanel order={order}/>
                                     </div>
 
                                     {/* Shipped — nudge toward confirming */}
