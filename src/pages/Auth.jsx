@@ -176,7 +176,7 @@ export default function Auth() {
           </header>
 
           {/* Desktop wordmark */}
-          <div className="hidden md:flex items-center gap-3 mb-6">
+          <div className="hidden md:flex items-center gap-3 mt-10">
             <img src={logoFull} alt="Rapaku" className="h-6 w-auto" />
             <span className="text-xs text-textSecondary border-l border-line pl-3">
               ラパク
@@ -184,7 +184,7 @@ export default function Auth() {
           </div>
 
           {/* Eyebrow badge */}
-          <div className="flex justify-center md:justify-start">
+          <div className="flex justify-center mt-5 md:justify-start">
             <span className="inline-flex items-center gap-2 rounded-full bg-ink-100 px-4 py-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               <span className="text-label uppercase text-textSecondary">

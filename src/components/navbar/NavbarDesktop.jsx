@@ -1,20 +1,34 @@
-import { Link } from "react-router-dom";
-import { Search, User, ShoppingCart, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import {
+    Search, User, ShoppingCart, ChevronDown, Store, Receipt,
+    Shield, Wallet, Settings, LogIn,
+} from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import logoImage from "../../assets/rapaku.png";
 import LogoutButton from "../LogoutButton";
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupInput,
-} from "../ui/input-group";
 
-const linkBase = "text-sm font-medium transition";
-const linkIdle = "text-gray-600 hover:text-darkblue";
-const linkActive = "text-textPrimary font-semibold";
+const NAV_LINKS = [
+    { to: "/", label: "Home", end: true },
+    { to: "/explore", label: "Explore" },
+];
+
+const ADMIN_LINKS = [
+    { to: "/users",             label: "Users",       icon: User },
+    { to: "/admin/products",    label: "Products",    icon: Store },
+    { to: "/admin/categories",  label: "Categories",  icon: Settings },
+    { to: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
+];
+
+const SELLER_LINKS = [
+    { to: "/seller/dashboard", label: "Seller Center", icon: Store },
+    { to: "/seller/orders",    label: "Incoming orders", icon: Receipt },
+    { to: "/seller/balance",   label: "Balance",       icon: Wallet },
+    { to: "/seller/store",     label: "Shop settings", icon: Settings },
+];
 
 const dropdownItem =
-    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-darkblue transition";
+    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-textSecondary hover:bg-ink-100 hover:text-textPrimary transition";
 
 export default function NavbarDesktop({
     searchQuery,
@@ -24,156 +38,219 @@ export default function NavbarDesktop({
     isAdmin,
     isSeller,
     user,
-    isAdminPage,
-    isSellerPage,
     homePath,
 }) {
-    const adminLinks = [
-        { to: "/users",            label: "Manage Users" },
-        { to: "/admin/categories", label: "Categories" },
-        { to: "/admin/products",   label: "Products" },
-    ];
     const { count } = useCart();
+    const { pathname } = useLocation();
+
+    const [accountOpen, setAccountOpen] = useState(false);
+    const accountRef = useRef(null);
+
+    // Close on navigation, on Escape, and on any click outside — a dropdown
+    // that only closes when you click the trigger again feels broken.
+    useEffect(() => {
+        setAccountOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        if (!accountOpen) return;
+
+        const onClick = (e) => {
+            if (accountRef.current && !accountRef.current.contains(e.target)) {
+                setAccountOpen(false);
+            }
+        };
+        const onKey = (e) => {
+            if (e.key === "Escape") setAccountOpen(false);
+        };
+
+        document.addEventListener("mousedown", onClick);
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("mousedown", onClick);
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [accountOpen]);
+
+    const roleLinks = isAdmin ? ADMIN_LINKS : isSeller ? SELLER_LINKS : [];
 
     return (
-        <header className="w-full fixed top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <header className="w-full fixed top-0 z-50 bg-surface border-b border-line">
 
             {/* Utility bar */}
-            <div className="flex justify-end px-8 py-1 bg-gray-50 text-[11px] text-gray-500 gap-4 border-b border-gray-100">
-                {isSeller && (
-                    <Link to="/seller/dashboard" className="hover:text-darkblue transition">
-                        Seller Center
-                    </Link>
-                )}
-                <a href="#" className="hover:text-darkblue transition">Help</a>
-                {isLoggedIn && <span className="text-gray-400">Hi, {user.name}</span>}
-            </div>
+            <div className="flex items-center justify-between px-8 py-1.5 bg-surfaceAlt border-b border-line text-xs text-textSecondary">
+                <span className="inline-flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    Payment held until you confirm delivery
+                </span>
 
-            {/* Main nav */}
-            <div className="flex items-center justify-between gap-3 px-8 py-2.5">
-
-                <Link to={homePath} className="shrink-0">
-                    <img src={logoImage} alt="Rapaku" className="w-auto h-6" />
-                </Link>
-
-                <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg">
-                    <InputGroup>
-                        <InputGroupInput
-                            placeholder="Search products..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <InputGroupAddon>
-                            <button type="submit" aria-label="Search" className="flex items-center">
-                                <Search size={15} />
-                            </button>
-                        </InputGroupAddon>
-                    </InputGroup>
-                </form>
-
-                {/* Right actions */}
-                <div className="flex items-center gap-5 border-l border-gray-200 pl-5">
-
-                    {!isAdminPage && (
-                        <>
-                            <Link
-                                to="/cart"
-                                aria-label="Cart"
-                                className="relative text-gray-500 hover:text-darkblue transition"
-                            >
-                                <ShoppingCart size={20} />
-                                {count > 0 && (
-                                    <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                                        {count > 9 ? "9+" : count}
-                                    </span>
-                                )}
-                            </Link>
-                            <Link to="/explore" className={`${linkBase} ${linkIdle}`}>
-                                Explore
-                            </Link>
-                        </>
-                    )}
-
-                    {isAdmin &&
-                        adminLinks.map(({ to, label }) => (
-                            <Link
-                                key={to}
-                                to={to}
-                                className={`${linkBase} ${isAdminPage ? linkActive : linkIdle}`}
-                            >
-                                {label}
-                            </Link>
-                        ))}
-
+                <div className="flex items-center gap-4">
                     {isSeller && (
                         <Link
                             to="/seller/dashboard"
-                            className={`${linkBase} ${isSellerPage ? linkActive : linkIdle}`}
+                            className="hover:text-textPrimary transition"
                         >
                             Seller Center
                         </Link>
                     )}
+                    {isAdmin && (
+                        <Link to="/users" className="hover:text-textPrimary transition">
+                            Admin
+                        </Link>
+                    )}
+                    <Link to="/explore" className="hover:text-textPrimary transition">
+                        Help
+                    </Link>
+                    {isLoggedIn && (
+                        <span className="text-textMuted">Hi, {user?.name}</span>
+                    )}
+                </div>
+            </div>
 
-                    {/* Account */}
+            {/* Main bar */}
+            <div className="flex items-center gap-6 px-8 py-1">
+
+                <Link to={homePath} className="shrink-0">
+                    <img src={logoImage} alt="Rapaku" className="w-auto h-7" />
+                </Link>
+
+                <nav className="flex items-center gap-5 shrink-0">
+                    {NAV_LINKS.map(({ to, label, end }) => (
+                        <NavLink
+                            key={to}
+                            to={to}
+                            end={end}
+                            className={({ isActive }) =>
+                                `text-sm transition ${
+                                    isActive
+                                        ? "text-textPrimary font-semibold"
+                                        : "text-textSecondary hover:text-textPrimary"
+                                }`
+                            }
+                        >
+                            {label}
+                        </NavLink>
+                    ))}
+                </nav>
+
+                {/* Search */}
+                <form onSubmit={handleSearchSubmit} className="flex-1">
+                    <div className="relative">
+                        <Search
+                            size={16}
+                            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-textMuted"
+                        />
+                        <input
+                            type="search"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search products, shops, materials"
+                            aria-label="Search"
+                            className="w-full rounded-full bg-ink-100 border border-transparent pl-9 pr-4 py-2 text-sm text-textPrimary placeholder:text-textMuted focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface transition"
+                        />
+                    </div>
+                </form>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                        to="/cart"
+                        aria-label="Cart"
+                        className="relative p-2 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-ink-100 transition"
+                    >
+                        <ShoppingCart size={19} />
+                        {count > 0 && (
+                            <span className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
+                                {count > 9 ? "9+" : count}
+                            </span>
+                        )}
+                    </Link>
+
                     {isLoggedIn ? (
-                        <div className="relative group">
+                        <div className="relative" ref={accountRef}>
                             <button
-                                type="button"
-                                className="flex items-center gap-1.5 text-gray-600 hover:text-primaryDark transition"
+                                onClick={() => setAccountOpen((v) => !v)}
+                                aria-expanded={accountOpen}
+                                aria-haspopup="menu"
+                                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-ink-100 transition"
                             >
-                                <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center">
-                                    <User size={16} className="text-primaryDark" />
-                                </div>
-                                <span className="text-sm text-textSecondary leading-none">Account</span>
-                                <ChevronDown size={14} className="text-textSecondary" />
+                                <span className="h-8 w-8 rounded-full bg-primarySoft text-primary flex items-center justify-center text-sm font-semibold">
+                                    {user?.name?.charAt(0)?.toUpperCase() || "?"}
+                                </span>
+                                <ChevronDown
+                                    size={15}
+                                    className={`text-textSecondary transition-transform ${
+                                        accountOpen ? "rotate-180" : ""
+                                    }`}
+                                />
                             </button>
 
-                            <div className="absolute right-0 top-full pt-2 hidden group-hover:block z-50">
-                                <div className="w-72 bg-white text-gray-900 rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-
-                                    <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 border-b border-gray-100">
-                                        <div className="w-10 h-10 rounded-full bg-darkblue/10 flex items-center justify-center text-darkblue shrink-0">
-                                            <User size={18} />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-darkblue text-sm truncate">
-                                                {user.name}
-                                            </p>
-                                            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                                        </div>
-                                        <LogoutButton
-                                            label="Sign Out"
-                                            className="text-red-400 text-xs font-medium hover:text-red-500 shrink-0 transition"
-                                        />
+                            {accountOpen && (
+                                <div
+                                    role="menu"
+                                    className="absolute right-0 mt-2 w-60 rounded-xl bg-surface border border-line shadow-lg p-2"
+                                >
+                                    <div className="px-3 py-2 border-b border-line mb-1">
+                                        <p className="text-sm font-semibold text-textPrimary truncate">
+                                            {user?.name}
+                                        </p>
+                                        <p className="text-xs text-textSecondary truncate">
+                                            {user?.email}
+                                        </p>
                                     </div>
 
-                                    <div className="px-2 py-2">
-                                        {isAdmin &&
-                                            adminLinks.map(({ to, label }) => (
+                                    {roleLinks.length > 0 && (
+                                        <>
+                                            <p className="px-3 pt-1 pb-1.5 text-label uppercase text-textMuted">
+                                                {isAdmin ? "Admin" : "Selling"}
+                                            </p>
+                                            {roleLinks.map(({ to, label, icon: Icon }) => (
                                                 <Link key={to} to={to} className={dropdownItem}>
+                                                    <Icon size={16} />
                                                     {label}
                                                 </Link>
                                             ))}
-                                        {isSeller && (
-                                            <Link to="/seller/dashboard" className={dropdownItem}>
-                                                Seller Center
-                                            </Link>
-                                        )}
-                                        <Link to="/orders" className={dropdownItem}>My Orders</Link>
-                                        <Link to="/explore" className={dropdownItem}>Explore</Link>
-                                        <Link to="/cart" className={dropdownItem}>My Cart</Link>
-                                    </div>
+                                            <div className="my-1 border-t border-line" />
+                                        </>
+                                    )}
+
+                                    {!isAdmin && (
+                                        <Link to="/orders" className={dropdownItem}>
+                                            <Receipt size={16} />
+                                            My orders
+                                        </Link>
+                                    )}
+                                    <Link to="/account" className={dropdownItem}>
+                                        <Settings size={16} />
+                                        Account settings
+                                    </Link>
+
+                                    <div className="my-1 border-t border-line" />
+
+                                    <LogoutButton
+                                        label="Sign out"
+                                        onClick={() => setAccountOpen(false)}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-danger hover:bg-dangerSoft transition"
+                                    />
                                 </div>
-                            </div>
+                            )}
                         </div>
                     ) : (
-                        <Link
-                            to="/login"
-                            className="flex flex-col items-center text-textPrimary transition"
-                        >
-                            <User size={20} />
-                            <span className="text-[10px] mt-0.5">Sign In</span>
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                to="/login"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-textPrimary hover:bg-ink-100 transition"
+                            >
+                                <LogIn size={16} />
+                                Sign in
+                            </Link>
+                            <Link
+                                to="/register"
+                                className="px-4 py-2 rounded-full bg-primary text-sm font-semibold text-white hover:bg-primaryHover transition"
+                            >
+                                Open your shop
+                            </Link>
+                        </div>
                     )}
                 </div>
             </div>

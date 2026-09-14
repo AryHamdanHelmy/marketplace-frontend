@@ -32,7 +32,7 @@ export default function Categories() {
 
                 {loading && (
                     <div className="flex overflow-hidden divide-x divide-line/20">
-                        {[1, 2, 3, 4, 5].map((i) => (
+                        {[1, 2, 3, 4, 5,].map((i) => (
                             <div key={i} className="shrink-0 w-32 md:w-40 p-6 flex flex-col items-center gap-4">
                                 <div className="w-24 h-24 bg-background rounded-full animate-pulse" />
                                 <div className="h-3 w-20 bg-background rounded animate-pulse" />
