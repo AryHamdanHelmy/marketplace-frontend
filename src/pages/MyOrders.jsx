@@ -58,21 +58,6 @@ export default function MyOrders() {
             year: "numeric",
         });
 
-    const handlePay = async (orderId) => {
-        if (processingId) return;
-        setProcessingId(orderId);
-        setActionError("");
-
-        try {
-            await apiRequest(`/orders/${orderId}/pay`, { method: "POST" });
-            refetch();
-        } catch (err) {
-            setActionError(err.message || "Payment failed");
-        } finally {
-            setProcessingId(null);
-        }
-    };
-
     const handleCancel = async (orderId) => {
         if (processingId) return;
         if (!window.confirm("Cancel this order? Stock will be returned.")) return;
@@ -252,14 +237,15 @@ export default function MyOrders() {
                                                 </button>
                                             )}
 
-                                            {order.status === "pending" && (
-                                                <button
-                                                    onClick={() => handlePay(order.id)}
-                                                    disabled={processingId === order.id}
-                                                    className="px-5 py-2 text-sm font-semibold text-white bg-primary hover:bg-primaryHover rounded-lg transition disabled:opacity-40"
+                                            {order.status === "pending" && order.checkout_group_id && (
+                                                <Link
+                                                    to={`/payment/${order.checkout_group_id}`}
+                                                    className={`px-5 py-2 text-sm font-semibold text-white bg-primary hover:bg-primaryHover rounded-lg transition ${
+                                                        processingId === order.id ? "pointer-events-none opacity-40" : ""
+                                                    }`}
                                                 >
-                                                    {processingId === order.id ? "Processing..." : "Pay Now"}
-                                                </button>
+                                                    Pay Now
+                                                </Link>
                                             )}
 
                                             {order.status === "shipped" && (
