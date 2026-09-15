@@ -301,8 +301,13 @@ export default function Payment() {
                 <div>
                   <p className="text-label uppercase text-textSecondary">Total due</p>
                   <p className="text-2xl font-bold tabular text-textPrimary">
-                    {rupiah(payment.amount)}
+                      {rupiah(payment.amount)}
                   </p>
+                  {Number(payment.shipping_total) > 0 && (
+                      <p className="text-xs text-textSecondary mt-0.5">
+                          {rupiah(payment.items_total)} barang + {rupiah(payment.shipping_total)} ongkir
+                      </p>
+                  )}
                 </div>
                 {remaining && remaining !== "expired" && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warningSoft text-warning text-xs font-semibold shrink-0">
