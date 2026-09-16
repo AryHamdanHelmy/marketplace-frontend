@@ -19,6 +19,8 @@ const STATUS_STYLE = {
     pending:   "bg-warningSoft text-warning",
     paid:      "bg-accentSoft text-accent",
     shipped:   "bg-primarySoft text-primary",
+    refund_pending: "bg-warningSoft text-warning",
+    refunded: "bg-ink-100 text-textSecondary",
     completed: "bg-successSoft text-success",
     cancelled: "bg-ink-100 text-textSecondary",
 };
@@ -205,7 +207,7 @@ export default function SellerOrders() {
                                             <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
                                                 STATUS_STYLE[order.status] || "bg-ink-100 text-textSecondary"
                                             }`}>
-                                                {order.status}
+                                                {order.status.replace("_", " ")}
                                             </span>
                                         </div>
 

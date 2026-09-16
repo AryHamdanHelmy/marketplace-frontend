@@ -14,12 +14,15 @@ const STATUS_TABS = [
     { value: "shipped",   label: "Shipped" },
     { value: "completed", label: "Completed" },
     { value: "cancelled", label: "Cancelled" },
+    { value: "refund_pending", label: "Refunds" },
 ];
 
 const STATUS_STYLE = {
     pending:   "bg-warningSoft text-warning",
     paid:      "bg-accentSoft text-accent",
     shipped:   "bg-primarySoft text-primary",
+    refund_pending: "bg-warningSoft text-warning",
+    refunded: "bg-ink-100 text-textSecondary",
     completed: "bg-successSoft text-success",
     cancelled: "bg-ink-100 text-textSecondary",
 };
@@ -188,7 +191,7 @@ export default function MyOrders() {
                                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
                                             STATUS_STYLE[order.status] || "bg-ink-100 text-textSecondary"
                                         }`}>
-                                            {order.status}
+                                            {order.status.replace("_", " ")}
                                         </span>
                                     </div>
 
@@ -213,6 +216,24 @@ export default function MyOrders() {
                                             </p>
                                         )}
                                         <TrackingPanel order={order}/>
+                                        {order.refund_reason && (
+                                            <div className="mt-3 text-xs bg-warningSoft text-warning rounded-lg px-3 py-2">
+                                                <p className="font-semibold">
+                                                    {order.status === "refunded" ? "Refunded" : "Refund in progress"}
+                                                </p>
+                                                <p className="mt-0.5">{order.refund_reason}</p>
+                                                {order.status === "refund_pending" && (
+                                                    <p className="mt-1 text-textSecondary">
+                                                        Our team will contact you for your bank account details.
+                                                    </p>
+                                                )}
+                                                {order.refunded_at && (
+                                                    <p className="mt-1 text-textSecondary">
+                                                        Refunded on {formatDate(order.refunded_at)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Shipped — nudge toward confirming */}
