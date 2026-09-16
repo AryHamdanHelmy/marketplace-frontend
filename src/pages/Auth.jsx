@@ -96,16 +96,6 @@ export default function Auth() {
 
     setSubmitting(true);
     try {
-      const check = await apiRequest("/auth/check-email", {
-        method: "POST",
-        body: { email },
-      });
-
-      if (!check.exists) {
-        navigate(`/register?email=${encodeURIComponent(email)}`);
-        return;
-      }
-
       const data = await apiRequest("/auth/login", {
         method: "POST",
         body: { email, password },
@@ -125,7 +115,11 @@ export default function Auth() {
 
       setTimeout(() => navigate(destination), 900);
     } catch (err) {
-      setServerError(err.message || "Something went wrong. Please try again.");
+      if (err.status === 401 || err.status === 422) {
+        setServerError("Email atau password salah. Belum punya akun? Buat akun di bawah.");
+      } else {
+        setServerError(err.message || "Something went wrong. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -406,14 +400,14 @@ export default function Auth() {
           src={panelImage}
           alt=""
           aria-hidden="true"
-          className="absolute insert-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-background/50"
         />
         <div className="relative max-w-md px-8 lg:px-12 py-8">
-          <p className="text-label uppercase tex-text">
+          <p className="text-label uppercase text-textPrimary">
             Rapaku · ラパク
           </p>
 
@@ -421,7 +415,7 @@ export default function Auth() {
             One gate. Every shop.
           </h2>
 
-          <p className="mt-3 text-sm leading-relaxed text-shadow-textPrimary">
+          <p className="mt-3 text-sm leading-relaxed text-textPrimary">
             The name comes from <em>lapakku</em> — "my stall" — said with a
             Japanese accent. Every seller here gets a proper shopfront, however
             small their workshop.
@@ -435,7 +429,7 @@ export default function Auth() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-textPrimary">{title}</p>
-                  <p className="mt-0.5 text-sm text-shadow-textPrimary leading-relaxed">
+                  <p className="mt-0.5 text-sm text-textPrimary leading-relaxed">
                     {body}
                   </p>
                 </div>

@@ -41,6 +41,7 @@ export default function SellerOrders() {
 
     const [processingId, setProcessingId] = useState(null);
     const [actionError, setActionError] = useState("");
+    const [trackingInputs, setTrackingInputs] = useState({});
 
     const orders = data?.data || [];
 
@@ -58,25 +59,41 @@ export default function SellerOrders() {
             year: "numeric",
         });
 
-    const handleMarkShipped = async (orderId) => {
+        const handleMarkShipped = async (order) => {
         if (processingId) return;
-        if (!window.confirm("Mark this order as shipped?")) return;
 
-        setProcessingId(orderId);
-        setActionError("");
+        const tracking = (trackingInputs[order.id] || "").trim();
 
-        try {
-            await apiRequest(`/seller/orders/${orderId}/status`, {
-                method: "PUT",
-                body: { status: "shipped" },
+            if (order.courier_code && !tracking) {
+                setActionError("Enter the tracking number before marking this as shipped.");
+                return;
+            }
+
+            if (!window.confirm("Mark this order as shipped?")) return;
+
+            setProcessingId(order.id);
+            setActionError("");
+
+            try {
+                await apiRequest(`/seller/orders/${order.id}/status`, {
+                    method: "PUT",
+                    body: {
+                        status: "shipped",
+                        ...(tracking ? { tracking_number: tracking } : {}),
+                },
+            });
+            setTrackingInputs((prev) => {
+                const next = { ...prev };
+                delete next[order.id];
+                return next;
             });
             refetch();
-        } catch (err) {
-            setActionError(err.message || "Failed to update order status");
-        } finally {
-            setProcessingId(null);
-        }
-    };
+            } catch (err) {
+                setActionError(err.message || "Failed to update order status");
+            } finally {
+                setProcessingId(null);
+            }
+        };
 
     // Ringkasan untuk kartu statistik
     const countBy = (s) => orders.filter((o) => o.status === s).length;
@@ -267,11 +284,35 @@ export default function SellerOrders() {
 
                                         {/* Ship action */}
                                         {order.status === "paid" && (
-                                            <div className="px-5 py-3 border-t border-line flex justify-end">
+                                            <div className="px-5 py-3 border-t border-line flex flex-col gap-2 sm:flex-row sm:items-center">
+                                                <div className="flex-1">
+                                                    {order.courier && (
+                                                        <p className="text-xs text-textSecondary mb-1">
+                                                            Courier: <span className="text-textPrimary font-medium">{order.courier}</span>
+                                                        </p>
+                                                    )}
+                                                    <input
+                                                        type="text"
+                                                        value={trackingInputs[order.id] || ""}
+                                                        onChange={(e) => {
+                                                            setTrackingInputs((prev) => ({ ...prev, [order.id]: e.target.value }));
+                                                            setActionError("");
+                                                        }}
+                                                        disabled={processingId === order.id}
+                                                        placeholder={
+                                                            order.courier_code === undefined
+                                                                ? "Tracking number"
+                                                                : order.courier_code
+                                                                    ? "Tracking number (required)"
+                                                                    : "Tracking number (optional)"
+                                                        }
+                                                        className="w-full rounded-lg bg-ink-100 text-textPrimary text-base md:text-sm px-3 py-2 border border-transparent placeholder:text-textMuted focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+                                                    />
+                                                </div>
                                                 <button
-                                                    onClick={() => handleMarkShipped(order.id)}
+                                                    onClick={() => handleMarkShipped(order)}
                                                     disabled={processingId === order.id}
-                                                    className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-primary hover:bg-primaryHover rounded-lg transition disabled:opacity-40"
+                                                    className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-primary hover:bg-primaryHover rounded-lg transition disabled:opacity-40 sm:self-end"
                                                 >
                                                     <Truck size={15} />
                                                     {processingId === order.id ? "Processing..." : "Mark as Shipped"}
