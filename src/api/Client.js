@@ -24,10 +24,28 @@ export async function apiRequest(endpoint, options = {}) {
       : undefined,
   });
 
-  const data = await response.json();
+  // Response kosong (204) atau HTML (502 dari proxy) tidak bisa di-parse sebagai JSON
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = data.message || "Terjadi kesalahan pada server";
+    // Token kedaluwarsa atau dicabut: bersihkan sesi lalu arahkan ke login.
+    // Hanya kalau request tadi memakai token, supaya login dengan password salah
+    // tetap menampilkan pesan error biasa.
+    if (response.status === 401 && token) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
+    let message = data.message || "Terjadi kesalahan pada server";
+    if (response.status === 429) {
+      message = "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.";
+    } else if (response.status === 401 && token) {
+      message = "Sesi kamu sudah berakhir. Silakan login lagi.";
+    }
+
     const error = new Error(message);
     error.errors = data.errors;
     error.status = response.status;
