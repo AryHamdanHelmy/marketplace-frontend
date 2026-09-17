@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../api/Client";
+import ChannelIcon, { METHOD_FOR_CHANNEL } from "../components/ChannelIcon";
 import {
   ArrowLeft, Copy, Check, Clock, CircleCheck, TriangleAlert,
   ShieldCheck, RefreshCw, Landmark, QrCode, Smartphone, ExternalLink,
@@ -8,15 +9,21 @@ import {
 
 const POLL_INTERVAL_MS = 15000;
 
-// Which icon sits next to each method in the picker. Falls back to Landmark,
-// which is right for every virtual account and for manual transfer.
-const CHANNEL_ICON = {
-  qris: QrCode,
-  gopay: Smartphone,
-};
-
 const rupiah = (value) =>
   "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
+
+// The charge response doesn't always echo the channel, so fall back to what
+// the instructions describe: "BNI" on a virtual account becomes "bni_va".
+const channelCodeFor = (payment) => {
+  if (payment?.channel) return payment.channel;
+
+  const ins = payment?.instructions;
+  if (!ins) return "";
+  if (ins.type === "virtual_account" && ins.bank) {
+    return `${String(ins.bank).toLowerCase()}_va`;
+  }
+  return ins.type; // "qris", "gopay"
+};
 
 export default function Payment() {
   const { groupId } = useParams();
@@ -236,7 +243,6 @@ export default function Payment() {
 
             <div className="space-y-3 mb-5">
               {channels.map((channel) => {
-                const Icon = CHANNEL_ICON[channel.code] || Landmark;
                 const active = selected === channel.code;
 
                 return (
@@ -250,15 +256,7 @@ export default function Payment() {
                         : "border-line bg-surface hover:border-lineStrong"
                     }`}
                   >
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                        active
-                          ? "bg-primary text-white"
-                          : "bg-ink-100 text-textSecondary"
-                      }`}
-                    >
-                      <Icon size={18} />
-                    </span>
+                    <ChannelIcon code={channel.code} logo={channel.logo} active={active} />
                     <span className="flex-1 min-w-0">
                       <span className="block font-semibold text-textPrimary">
                         {channel.label}
@@ -297,6 +295,25 @@ export default function Payment() {
         {payment && !isPaid && !isDead && (
           <>
             <div className="bg-surface border border-line rounded-xl p-5 mb-4">
+            {(() => {
+              const code = channelCodeFor(payment);
+              if (!code) return null;
+              const label =
+                channels.find((c) => c.code === code)?.label ||
+                (instructions?.type === "virtual_account"
+                  ? `${instructions.bank} Virtual Account`
+                  : code.toUpperCase());
+
+              return (
+                <div className="flex items-center gap-3 pb-4 mb-4 border-b border-line">
+                  <ChannelIcon
+                    code={code}
+                    logo={channels.find((c) => c.code === code)?.logo}
+                  />
+                  <span className="text-sm font-semibold text-textPrimary">{label}</span>
+                </div>
+              );
+            })()}
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <p className="text-label uppercase text-textSecondary">Total due</p>
@@ -404,7 +421,6 @@ export default function Payment() {
               {/* Virtual account */}
               {instructions?.type === "virtual_account" && (
                 <div className="space-y-3">
-                  <Detail label="Bank" value={instructions.bank} />
                   <Detail
                     label="Virtual account"
                     value={instructions.va_number}

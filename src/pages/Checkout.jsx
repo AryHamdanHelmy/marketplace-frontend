@@ -1,93 +1,84 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
 import { apiRequest } from "../api/Client";
 import { useCart } from "../context/CartContext";
 import AreaPicker from "../components/AreaPicker";
 import {
     MapPin, Package, CreditCard, ShieldCheck, Check, Plus,
-    Landmark, ChevronDown, ChevronUp, X, Truck, Loader2,
+    ChevronDown, ChevronUp, X, Truck, Loader2, Lock,
 } from "lucide-react";
+import ChannelIcon, { METHOD_FOR_CHANNEL } from "../components/ChannelIcon";
 
 const STEPS = ["Cart", "Address", "Payment", "Done"];
 const CURRENT_STEP = 2;   // Address and payment both happen on this page
- 
-// The gateway speaks in channels; the legacy payments table speaks in methods.
-// One mapping in one place, rather than the two vocabularies leaking into
-// every component.
-const METHOD_FOR_CHANNEL = {
-    bank_transfer: "bank_transfer",
-    qris: "ewallet",
-    gopay: "ewallet",
-    ovo: "ewallet",
-    credit_card: "bank_transfer",
-};
- 
+
+
 const rupiah = (value) =>
     "Rp " + Number(value ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 0 });
- 
+
 export default function Checkout() {
     const navigate = useNavigate();
     const location = useLocation();
     const cartItemIds = location.state?.cartItemIds || null;
- 
+
     useEffect(() => {
         if (!cartItemIds || cartItemIds.length === 0) {
             navigate("/cart", { replace: true });
         }
     }, [cartItemIds, navigate]);
- 
+
     const { data, loading, error } = useFetch("/cart", []);
     const { refresh: refreshCartCount } = useCart();
- 
+
     const [addresses, setAddresses] = useState([]);
     const [addressId, setAddressId] = useState(null);
     const [pickerOpen, setPickerOpen] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
- 
+
     const [channels, setChannels] = useState([]);
     const [channel, setChannel] = useState("");
- 
+
     // Shipping quotes, keyed by seller id, plus the courier chosen for each.
     const [shipments, setShipments] = useState([]);
     const [courierBySeller, setCourierBySeller] = useState({});
     const [quoting, setQuoting] = useState(false);
     const [quoteError, setQuoteError] = useState("");
- 
+
     const [notes, setNotes] = useState("");
     const [summaryOpen, setSummaryOpen] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [serverError, setServerError] = useState("");
     const [itemErrors, setItemErrors] = useState([]);
- 
+
     // Created once when the page opens, not on each click. Clicking "Place
     // order" repeatedly reuses the same key, so the backend recognises it as
     // one attempt rather than several orders.
     const [idempotencyKey] = useState(() => crypto.randomUUID());
- 
+
     useEffect(() => {
         (async () => {
             const [addressRes, channelRes] = await Promise.all([
                 apiRequest("/addresses").catch(() => null),
                 apiRequest("/payments/channels").catch(() => null),
             ]);
- 
+
             const list = addressRes?.data || [];
             setAddresses(list);
             setAddressId(list.find((a) => a.is_default)?.id ?? list[0]?.id ?? null);
- 
+
             const available = channelRes?.data || [];
             setChannels(available);
             setChannel(available[0]?.code || "");
         })();
     }, []);
- 
+
     const allItems = data?.data || [];
     const items = cartItemIds
         ? allItems.filter((item) => cartItemIds.includes(item.id))
         : allItems;
     const itemsTotal = items.reduce((sum, item) => sum + Number(item.subtotal), 0);
- 
+
     // Grouped by seller, mirroring how the backend splits the transactions.
     // Keyed by id rather than name so shipping quotes can be matched back —
     // two shops can share a display name, ids can't.
@@ -100,32 +91,32 @@ export default function Checkout() {
         return acc;
     }, {});
     const sellerGroups = Object.values(groupedBySeller);
- 
+
     const selectedAddress = addresses.find((a) => a.id === addressId);
- 
+
     // Re-quote whenever the destination changes. Each call can cost provider
     // quota, so it's tied to the address and the item set — not to every
     // render, and not to picking a courier.
     useEffect(() => {
         if (!addressId || !cartItemIds?.length) return;
- 
+
         let cancelled = false;
- 
+
         (async () => {
             setQuoting(true);
             setQuoteError("");
- 
+
             try {
                 const res = await apiRequest("/shipping/quote", {
                     method: "POST",
                     body: { address_id: addressId, cart_item_ids: cartItemIds },
                 });
- 
+
                 if (cancelled) return;
- 
+
                 const list = res.data?.shipments || [];
                 setShipments(list);
- 
+
                 // Preselect the cheapest per shop. The backend returns them
                 // cheapest first, so this is just the head of each list.
                 const preset = {};
@@ -135,7 +126,7 @@ export default function Checkout() {
                 setCourierBySeller(preset);
             } catch (err) {
                 if (cancelled) return;
- 
+
                 setShipments([]);
                 setCourierBySeller({});
                 setQuoteError(err.message || "Couldn't calculate shipping right now.");
@@ -143,59 +134,86 @@ export default function Checkout() {
                 if (!cancelled) setQuoting(false);
             }
         })();
- 
+
         return () => {
             cancelled = true;
         };
     }, [addressId, cartItemIds]);
- 
+
     const shipmentFor = (sellerId) =>
         shipments.find((s) => String(s.seller_id) === String(sellerId));
- 
+
     const rateFor = (sellerId) => {
         const shipment = shipmentFor(sellerId);
         const key = courierBySeller[sellerId];
         return shipment?.rates?.find((r) => r.key === key) || null;
     };
- 
+
     const shippingTotal = sellerGroups.reduce(
         (sum, group) => sum + Number(rateFor(group.id)?.cost || 0),
         0
     );
- 
+
     const grandTotal = itemsTotal + shippingTotal;
- 
+
     // Every shop needs a courier before this can be ordered. Checked here so
     // the button explains itself, rather than the server rejecting it after
     // the buyer has already committed.
     const shippingReady =
         sellerGroups.length > 0 &&
         sellerGroups.every((group) => Boolean(rateFor(group.id)));
- 
+
+    // Shared by the desktop sidebar and the mobile sticky bar, so both
+    // buttons always agree on whether an order can be placed.
+    const canSubmit =
+        !submitting &&
+        items.length > 0 &&
+        Boolean(addressId) &&
+        !quoting &&
+        shippingReady;
+
+    const submitLabel = submitting
+        ? "Placing order..."
+        : quoting
+            ? "Checking rates..."
+            : "Place order";
+
+    // Why the button is disabled, in words. Only the desktop sidebar has
+    // room for it; on mobile the sections above already say the same thing.
+    const blockedReason = submitting || quoting
+        ? ""
+        : !addressId
+            ? "Add a delivery address to continue."
+            : selectedAddress && !selectedAddress.destination_area_id
+                ? "Set a delivery area on this address to calculate shipping."
+                : !shippingReady && sellerGroups.length > 0
+                    ? "Pick a courier for every shop to continue."
+                    : "";
+
     const handleAddressSaved = (address) => {
         setAddresses((prev) => [address, ...prev.filter((a) => a.id !== address.id)]);
         setAddressId(address.id);
         setFormOpen(false);
         setPickerOpen(false);
     };
- 
+
     const handleSubmit = async () => {
         if (submitting) return;
- 
+
         if (!addressId) {
             setServerError("Choose where this should be delivered.");
             return;
         }
- 
+
         if (!shippingReady) {
             setServerError("Pick a courier for every shop in your order.");
             return;
         }
- 
+
         setServerError("");
         setItemErrors([]);
         setSubmitting(true);
- 
+
         try {
             const res = await apiRequest("/checkout", {
                 method: "POST",
@@ -205,16 +223,16 @@ export default function Checkout() {
                     payment_method: METHOD_FOR_CHANNEL[channel] || "bank_transfer",
                     notes: notes || null,
                     cart_item_ids: cartItemIds,
- 
+
                     // Only the service key travels. The server re-prices it —
                     // a cost sent from here would be a cost anyone could edit.
                     shipping: courierBySeller,
                 },
             });
- 
+
             const groupId = res.data?.checkout_group_id;
             refreshCartCount();
- 
+
             // Open the charge straight away so the buyer lands on payment
             // instructions rather than picking a method twice. If it fails the
             // payment page still works — it just shows the picker again.
@@ -226,7 +244,7 @@ export default function Checkout() {
             } catch {
                 // Non-fatal: the order exists, payment can be started later
             }
- 
+
             navigate(`/payment/${groupId}`);
         } catch (err) {
             if (err.errors && Array.isArray(err.errors)) {
@@ -236,21 +254,34 @@ export default function Checkout() {
             setSubmitting(false);
         }
     };
- 
+
+    const errorBox = serverError && (
+        <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3">
+            {serverError}
+            {itemErrors.length > 0 && (
+                <ul className="mt-2 list-disc list-inside space-y-1">
+                    {itemErrors.map((message, i) => (
+                        <li key={i}>{message}</li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-background pt-20 pb-44 px-4">
-            <div className="max-w-2xl mx-auto">
- 
+        <div className="min-h-screen bg-background pt-20 pb-44 lg:pb-16 px-4 lg:px-8">
+            <div className="max-w-2xl lg:max-w-6xl mx-auto">
+
                 {/* Stepper */}
-                <div className="bg-surface border border-line rounded-xl p-4 mb-4">
+                <div className="bg-surface border border-line rounded-xl p-4 lg:px-8 mb-4 lg:mb-6">
                     <div className="flex items-center">
                         {STEPS.map((label, index) => {
                             const done = index < CURRENT_STEP;
                             const active = index === CURRENT_STEP;
- 
+
                             return (
                                 <div key={label} className="flex items-center flex-1 last:flex-none">
-                                    <div className="flex flex-col items-center gap-1.5">
+                                    <div className="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-2">
                                         <span
                                             className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold ${
                                                 active
@@ -263,7 +294,7 @@ export default function Checkout() {
                                             {done ? <Check size={14} strokeWidth={3} /> : index + 1}
                                         </span>
                                         <span
-                                            className={`text-[10px] ${
+                                            className={`text-[10px] lg:text-sm ${
                                                 active ? "text-textPrimary font-semibold" : "text-textMuted"
                                             }`}
                                         >
@@ -272,7 +303,7 @@ export default function Checkout() {
                                     </div>
                                     {index < STEPS.length - 1 && (
                                         <span
-                                            className={`flex-1 h-0.5 mx-1 -mt-4 ${
+                                            className={`flex-1 h-0.5 mx-1 lg:mx-4 -mt-4 lg:mt-0 ${
                                                 done ? "bg-primary" : "bg-ink-200"
                                             }`}
                                         />
@@ -282,331 +313,417 @@ export default function Checkout() {
                         })}
                     </div>
                 </div>
- 
-                {serverError && (
-                    <div className="bg-dangerSoft border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-4">
-                        {serverError}
-                        {itemErrors.length > 0 && (
-                            <ul className="mt-2 list-disc list-inside space-y-1">
-                                {itemErrors.map((message, i) => (
-                                    <li key={i}>{message}</li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                )}
- 
-                {/* Address */}
-                <section className="bg-surface border border-line rounded-xl p-4 mb-4">
-                    <div className="flex items-center justify-between gap-3 mb-3">
-                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-textPrimary">
-                            <MapPin size={16} className="text-primary" />
-                            Delivery address
-                        </span>
-                        {addresses.length > 0 && (
-                            <button
-                                onClick={() => setPickerOpen(true)}
-                                className="text-sm font-semibold text-primary hover:underline"
-                            >
-                                Change
-                            </button>
-                        )}
-                    </div>
- 
-                    {selectedAddress ? (
-                        <div>
-                            <p className="text-sm font-semibold text-textPrimary">
-                                {selectedAddress.recipient_name}
-                                <span className="font-normal text-textSecondary">
-                                    {"  "}({selectedAddress.phone})
+
+                <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:items-start">
+
+                    {/* ===== Left column: the steps ===== */}
+                    <div className="min-w-0">
+
+                        {/* On desktop the error sits beside the button that caused it */}
+                        {errorBox && <div className="mb-4 lg:hidden">{errorBox}</div>}
+
+                        {/* Address */}
+                        <section className="bg-surface border border-line rounded-xl p-4 lg:p-6 mb-4">
+                            <div className="flex items-center justify-between gap-3 mb-3">
+                                <span className="inline-flex items-center gap-2 text-sm lg:text-base font-semibold text-textPrimary">
+                                    <MapPin size={16} className="text-primary" />
+                                    Delivery address
                                 </span>
-                                {selectedAddress.is_default && (
-                                    <span className="ml-2 text-[10px] uppercase tracking-wide bg-ink-100 text-textSecondary px-2 py-0.5 rounded-full">
-                                        Default
-                                    </span>
-                                )}
-                            </p>
-                            <p className="text-sm text-textSecondary mt-1 leading-relaxed">
-                                {selectedAddress.street}
-                                {selectedAddress.district ? `, ${selectedAddress.district}` : ""}
-                                <br />
-                                {selectedAddress.city}, {selectedAddress.province}{" "}
-                                {selectedAddress.postal_code}
-                            </p>
-                            {selectedAddress.courier_note && (
-                                <p className="mt-2 text-xs text-textSecondary bg-ink-100 rounded-lg px-3 py-2">
-                                    {selectedAddress.courier_note}
-                                </p>
-                            )}
- 
-                            {/* An address saved before the area picker existed
-                                can't be quoted. Said here because this is where
-                                the buyer can act on it. */}
-                            {!selectedAddress.destination_area_id && (
-                                <p className="mt-2 text-xs text-warning bg-warningSoft rounded-lg px-3 py-2">
-                                    This address has no delivery area set, so shipping
-                                    can't be calculated. Edit it from your account and
-                                    pick your district.
-                                </p>
-                            )}
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setFormOpen(true)}
-                            className="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-lineStrong py-4 text-sm font-semibold text-primary hover:bg-primarySoft transition"
-                        >
-                            <Plus size={16} />
-                            Add a delivery address
-                        </button>
-                    )}
-                </section>
- 
-                {/* Order summary */}
-                <section className="bg-surface border border-line rounded-xl mb-4 overflow-hidden">
-                    <button
-                        onClick={() => setSummaryOpen((v) => !v)}
-                        className="w-full flex items-center justify-between gap-3 p-4"
-                    >
-                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-textPrimary">
-                            <Package size={16} className="text-primary" />
-                            Order summary ({items.length} item{items.length === 1 ? "" : "s"})
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-sm font-bold text-textPrimary tabular">
-                            {rupiah(itemsTotal)}
-                            {summaryOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                        </span>
-                    </button>
- 
-                    {summaryOpen && (
-                        <div className="border-t border-line">
-                            {loading && (
-                                <p className="p-4 text-sm text-textSecondary">Loading...</p>
-                            )}
-                            {!loading && error && (
-                                <p className="p-4 text-sm text-danger">Error: {error}</p>
-                            )}
- 
-                            {sellerGroups.map((group) => (
-                                <div key={group.id} className="border-b border-line last:border-0">
-                                    <p className="px-4 pt-3 text-label uppercase text-textSecondary">
-                                        {group.name}
-                                    </p>
-                                    {group.items.map((item) => (
-                                        <div key={item.id} className="flex gap-3 px-4 py-3">
-                                            <div className="w-14 h-14 rounded-lg bg-ink-100 overflow-hidden shrink-0">
-                                                {item.product.thumbnail ? (
-                                                    <img
-                                                        src={item.product.thumbnail}
-                                                        alt={item.product.title}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-textMuted text-[10px]">
-                                                        No img
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm text-textPrimary line-clamp-2">
-                                                    {item.product.title}
-                                                </p>
-                                                <p className="text-xs text-textSecondary mt-0.5">
-                                                    {rupiah(item.product.price)} × {item.quantity}
-                                                </p>
-                                            </div>
-                                            <p className="text-sm font-semibold text-primary tabular shrink-0">
-                                                {rupiah(item.subtotal)}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
- 
-                            {sellerGroups.length > 1 && (
-                                <p className="px-4 py-3 text-xs text-textSecondary bg-surfaceAlt">
-                                    This splits into {sellerGroups.length} orders, one per shop.
-                                    You still pay once, but each ships separately.
-                                </p>
-                            )}
-                        </div>
-                    )}
-                </section>
- 
-                {/* Shipping — one courier choice per shop */}
-                <section className="bg-surface border border-line rounded-xl p-4 mb-4">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-textPrimary mb-3">
-                        <Truck size={16} className="text-primary" />
-                        Shipping
-                    </span>
- 
-                    {quoting && (
-                        <p className="inline-flex items-center gap-2 text-sm text-textSecondary">
-                            <Loader2 size={14} className="animate-spin" />
-                            Checking rates...
-                        </p>
-                    )}
- 
-                    {!quoting && quoteError && (
-                        <p className="text-sm text-danger">{quoteError}</p>
-                    )}
- 
-                    {!quoting && !quoteError && sellerGroups.map((group) => {
-                        const shipment = shipmentFor(group.id);
-                        const rates = shipment?.rates || [];
- 
-                        return (
-                            <div key={group.id} className="mb-4 last:mb-0">
-                                {sellerGroups.length > 1 && (
-                                    <p className="mb-2 text-label uppercase text-textSecondary">
-                                        {group.name}
-                                    </p>
-                                )}
- 
-                                {/* A shop that can't be quoted blocks only itself.
-                                    The reason comes from the server, because only
-                                    it knows whether the shop or the route is at
-                                    fault. */}
-                                {rates.length === 0 ? (
-                                    <p className="rounded-lg bg-warningSoft px-3 py-2.5 text-sm text-warning">
-                                        {shipment?.error || "No couriers available for this shop."}
-                                    </p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {rates.map((rate) => {
-                                            const active = courierBySeller[group.id] === rate.key;
- 
-                                            return (
-                                                <button
-                                                    key={rate.key}
-                                                    onClick={() =>
-                                                        setCourierBySeller((prev) => ({
-                                                            ...prev,
-                                                            [group.id]: rate.key,
-                                                        }))
-                                                    }
-                                                    aria-pressed={active}
-                                                    className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition ${
-                                                        active
-                                                            ? "border-primary bg-primarySoft"
-                                                            : "border-line hover:border-lineStrong"
-                                                    }`}
-                                                >
-                                                    <span className="flex-1 min-w-0">
-                                                        <span className="block text-sm font-semibold text-textPrimary">
-                                                            {rate.courier_name} {rate.service_name}
-                                                        </span>
-                                                        {rate.etd && (
-                                                            <span className="block text-xs text-textSecondary mt-0.5">
-                                                                Estimated {rate.etd}
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                    <span className="text-sm font-semibold text-textPrimary tabular shrink-0">
-                                                        {rupiah(rate.cost)}
-                                                    </span>
-                                                    <span
-                                                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                                                            active
-                                                                ? "border-primary bg-primary text-white"
-                                                                : "border-lineStrong"
-                                                        }`}
-                                                    >
-                                                        {active && <Check size={10} strokeWidth={3} />}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
+                                {addresses.length > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setFormOpen(true)}
+                                            className="hidden lg:inline-flex items-center gap-1 text-sm font-semibold text-textSecondary hover:text-primary transition"
+                                        >
+                                            <Plus size={14} />
+                                            New address
+                                        </button>
+                                        <button
+                                            onClick={() => setPickerOpen(true)}
+                                            className="text-sm font-semibold text-primary hover:underline"
+                                        >
+                                            Change
+                                        </button>
                                     </div>
                                 )}
                             </div>
-                        );
-                    })}
-                </section>
- 
-                {/* Notes */}
-                <section className="bg-surface border border-line rounded-xl p-4 mb-4">
-                    <label
-                        htmlFor="notes"
-                        className="block text-sm font-semibold text-textPrimary mb-2"
-                    >
-                        Note for the seller
-                        <span className="font-normal text-textSecondary"> (optional)</span>
-                    </label>
-                    <textarea
-                        id="notes"
-                        rows={2}
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        maxLength={500}
-                        placeholder="Gift wrapping, colour preference, anything else."
-                        className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-base resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                </section>
- 
-                {/* Payment method */}
-                <section className="bg-surface border border-line rounded-xl p-4 mb-4">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-textPrimary mb-3">
-                        <CreditCard size={16} className="text-primary" />
-                        Payment method
-                    </span>
- 
-                    <div className="space-y-2">
-                        {channels.map((option) => (
-                            <button
-                                key={option.code}
-                                onClick={() => setChannel(option.code)}
-                                aria-pressed={channel === option.code}
-                                className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition ${
-                                    channel === option.code
-                                        ? "border-primary bg-primarySoft"
-                                        : "border-line hover:border-lineStrong"
-                                }`}
-                            >
-                                <span
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                        channel === option.code
-                                            ? "bg-primary text-white"
-                                            : "bg-ink-100 text-textSecondary"
-                                    }`}
-                                >
-                                    <Landmark size={16} />
-                                </span>
-                                <span className="flex-1 min-w-0">
-                                    <span className="block text-sm font-semibold text-textPrimary">
-                                        {option.label}
-                                    </span>
-                                    {option.description && (
-                                        <span className="block text-xs text-textSecondary mt-0.5">
-                                            {option.description}
+
+                            {selectedAddress ? (
+                                <div className="lg:rounded-lg lg:border lg:border-line lg:bg-surfaceAlt lg:p-4">
+                                    <p className="text-sm font-semibold text-textPrimary">
+                                        {selectedAddress.recipient_name}
+                                        <span className="font-normal text-textSecondary">
+                                            {"  "}({selectedAddress.phone})
                                         </span>
+                                        {selectedAddress.is_default && (
+                                            <span className="ml-2 text-[10px] uppercase tracking-wide bg-ink-100 text-textSecondary px-2 py-0.5 rounded-full">
+                                                Default
+                                            </span>
+                                        )}
+                                    </p>
+                                    <p className="text-sm text-textSecondary mt-1 leading-relaxed">
+                                        {selectedAddress.street}
+                                        {selectedAddress.district ? `, ${selectedAddress.district}` : ""}
+                                        <br />
+                                        {selectedAddress.city}, {selectedAddress.province}{" "}
+                                        {selectedAddress.postal_code}
+                                    </p>
+                                    {selectedAddress.courier_note && (
+                                        <p className="mt-2 text-xs text-textSecondary bg-ink-100 lg:bg-surface rounded-lg px-3 py-2">
+                                            {selectedAddress.courier_note}
+                                        </p>
                                     )}
-                                </span>
-                                <span
-                                    className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                                        channel === option.code
-                                            ? "border-primary bg-primary text-white"
-                                            : "border-lineStrong"
-                                    }`}
+
+                                    {/* An address saved before the area picker existed
+                                        can't be quoted. Said here because this is where
+                                        the buyer can act on it. */}
+                                    {!selectedAddress.destination_area_id && (
+                                        <p className="mt-2 text-xs text-warning bg-warningSoft rounded-lg px-3 py-2">
+                                            This address has no delivery area set, so shipping
+                                            can't be calculated. Edit it from your account and
+                                            pick your district.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setFormOpen(true)}
+                                    className="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-lineStrong py-4 text-sm font-semibold text-primary hover:bg-primarySoft transition"
                                 >
-                                    {channel === option.code && <Check size={10} strokeWidth={3} />}
+                                    <Plus size={16} />
+                                    Add a delivery address
+                                </button>
+                            )}
+                        </section>
+
+                        {/* Order items */}
+                        <section className="bg-surface border border-line rounded-xl mb-4 overflow-hidden">
+                            <button
+                                onClick={() => setSummaryOpen((v) => !v)}
+                                className="w-full flex items-center justify-between gap-3 p-4 lg:px-6"
+                            >
+                                <span className="inline-flex items-center gap-2 text-sm lg:text-base font-semibold text-textPrimary">
+                                    <Package size={16} className="text-primary" />
+                                    Order summary ({items.length} item{items.length === 1 ? "" : "s"})
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-sm font-bold text-textPrimary tabular">
+                                    {rupiah(itemsTotal)}
+                                    {summaryOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                                 </span>
                             </button>
-                        ))}
+
+                            {summaryOpen && (
+                                <div className="border-t border-line">
+                                    {loading && (
+                                        <p className="p-4 text-sm text-textSecondary">Loading...</p>
+                                    )}
+                                    {!loading && error && (
+                                        <p className="p-4 text-sm text-danger">Error: {error}</p>
+                                    )}
+
+                                    {sellerGroups.map((group) => (
+                                        <div key={group.id} className="border-b border-line last:border-0">
+                                            <p className="px-4 lg:px-6 pt-3 text-label uppercase text-textSecondary">
+                                                {group.name}
+                                            </p>
+                                            {group.items.map((item) => (
+                                                <div key={item.id} className="flex gap-3 lg:gap-4 px-4 lg:px-6 py-3">
+                                                    <div className="w-14 h-14 lg:w-20 lg:h-20 rounded-lg bg-ink-100 overflow-hidden shrink-0">
+                                                        {item.product.thumbnail ? (
+                                                            <img
+                                                                src={item.product.thumbnail}
+                                                                alt={item.product.title}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-textMuted text-[10px]">
+                                                                No img
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm lg:text-base text-textPrimary line-clamp-2">
+                                                            {item.product.title}
+                                                        </p>
+                                                        <p className="text-xs text-textSecondary mt-0.5">
+                                                            {rupiah(item.product.price)} × {item.quantity}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-sm lg:text-base font-semibold text-primary tabular shrink-0">
+                                                        {rupiah(item.subtotal)}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+
+                                    {sellerGroups.length > 1 && (
+                                        <p className="px-4 lg:px-6 py-3 text-xs text-textSecondary bg-surfaceAlt">
+                                            This splits into {sellerGroups.length} orders, one per shop.
+                                            You still pay once, but each ships separately.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Shipping — one courier choice per shop */}
+                        <section className="bg-surface border border-line rounded-xl p-4 lg:p-6 mb-4">
+                            <span className="inline-flex items-center gap-2 text-sm lg:text-base font-semibold text-textPrimary mb-3">
+                                <Truck size={16} className="text-primary" />
+                                Shipping
+                            </span>
+
+                            {quoting && (
+                                <p className="inline-flex items-center gap-2 text-sm text-textSecondary">
+                                    <Loader2 size={14} className="animate-spin" />
+                                    Checking rates...
+                                </p>
+                            )}
+
+                            {!quoting && quoteError && (
+                                <p className="text-sm text-danger">{quoteError}</p>
+                            )}
+
+                            {!quoting && !quoteError && sellerGroups.map((group) => {
+                                const shipment = shipmentFor(group.id);
+                                const rates = shipment?.rates || [];
+
+                                return (
+                                    <div key={group.id} className="mb-4 last:mb-0">
+                                        {sellerGroups.length > 1 && (
+                                            <p className="mb-2 text-label uppercase text-textSecondary">
+                                                {group.name}
+                                            </p>
+                                        )}
+
+                                        {/* A shop that can't be quoted blocks only itself.
+                                            The reason comes from the server, because only
+                                            it knows whether the shop or the route is at
+                                            fault. */}
+                                        {rates.length === 0 ? (
+                                            <p className="rounded-lg bg-warningSoft px-3 py-2.5 text-sm text-warning">
+                                                {shipment?.error || "No couriers available for this shop."}
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {rates.map((rate) => {
+                                                    const active = courierBySeller[group.id] === rate.key;
+
+                                                    return (
+                                                        <button
+                                                            key={rate.key}
+                                                            onClick={() =>
+                                                                setCourierBySeller((prev) => ({
+                                                                    ...prev,
+                                                                    [group.id]: rate.key,
+                                                                }))
+                                                            }
+                                                            aria-pressed={active}
+                                                            className={`flex w-full items-center gap-3 rounded-lg border p-3 lg:p-4 text-left transition ${
+                                                                active
+                                                                    ? "border-primary bg-primarySoft"
+                                                                    : "border-line hover:border-lineStrong"
+                                                            }`}
+                                                        >
+                                                            <span
+                                                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                                                    active
+                                                                        ? "border-primary bg-primary text-white"
+                                                                        : "border-lineStrong"
+                                                                }`}
+                                                            >
+                                                                {active && <Check size={10} strokeWidth={3} />}
+                                                            </span>
+                                                            <span className="flex-1 min-w-0">
+                                                                <span className="block text-sm font-semibold text-textPrimary">
+                                                                    {rate.courier_name} {rate.service_name}
+                                                                </span>
+                                                                {rate.etd && (
+                                                                    <span className="block text-xs text-textSecondary mt-0.5">
+                                                                        Estimated {rate.etd}
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                            <span className="text-sm font-semibold text-textPrimary tabular shrink-0">
+                                                                {rupiah(rate.cost)}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </section>
+
+                        {/* Notes */}
+                        <section className="bg-surface border border-line rounded-xl p-4 lg:p-6 mb-4">
+                            <label
+                                htmlFor="notes"
+                                className="block text-sm lg:text-base font-semibold text-textPrimary mb-2"
+                            >
+                                Note for the seller
+                                <span className="font-normal text-textSecondary"> (optional)</span>
+                            </label>
+                            <textarea
+                                id="notes"
+                                rows={2}
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                maxLength={500}
+                                placeholder="Gift wrapping, colour preference, anything else."
+                                className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-base resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </section>
+
+                        {/* Payment method */}
+                        <section className="bg-surface border border-line rounded-xl p-4 lg:p-6 mb-4">
+                            <span className="inline-flex items-center gap-2 text-sm lg:text-base font-semibold text-textPrimary mb-3">
+                                <CreditCard size={16} className="text-primary" />
+                                Payment method
+                            </span>
+
+                            <div className="space-y-2">
+                                {channels.map((option) => {
+                                    const active = channel === option.code;
+
+                                    return (
+                                        <button
+                                            key={option.code}
+                                            onClick={() => setChannel(option.code)}
+                                            aria-pressed={active}
+                                            className={`flex w-full items-center gap-3 rounded-lg border p-3 lg:p-4 text-left transition ${
+                                                active
+                                                    ? "border-primary bg-primarySoft"
+                                                    : "border-line hover:border-lineStrong"
+                                            }`}
+                                        >
+                                            <ChannelIcon code={option.code} logo={option.logo} active={channel === option.code} />
+                                            <span className="flex-1 min-w-0">
+                                                <span className="block text-sm font-semibold text-textPrimary">
+                                                    {option.label}
+                                                </span>
+                                                {option.description && (
+                                                    <span className="block text-xs text-textSecondary mt-0.5">
+                                                        {option.description}
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <span
+                                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                                    active
+                                                        ? "border-primary bg-primary text-white"
+                                                        : "border-lineStrong"
+                                                }`}
+                                            >
+                                                {active && <Check size={10} strokeWidth={3} />}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </section>
+
+                        {/* Escrow — mobile only; desktop shows it under the button */}
+                        <div className="lg:hidden flex items-start gap-3 bg-primarySoft rounded-xl p-4">
+                            <ShieldCheck size={18} className="text-primary mt-0.5 shrink-0" />
+                            <p className="text-xs leading-relaxed text-primaryDark">
+                                Your money is held by Rapaku, not sent to the seller. They are
+                                paid only after you confirm the order arrived in good condition.
+                            </p>
+                        </div>
                     </div>
-                </section>
- 
-                {/* Escrow */}
-                <div className="flex items-start gap-3 bg-primarySoft rounded-xl p-4">
-                    <ShieldCheck size={18} className="text-primary mt-0.5 shrink-0" />
-                    <p className="text-xs leading-relaxed text-primaryDark">
-                        Your money is held by Rapaku, not sent to the seller. They are
-                        paid only after you confirm the order arrived in good condition.
-                    </p>
+
+                    {/* ===== Right column: payment summary (desktop) ===== */}
+                    <aside className="hidden lg:block sticky top-24 space-y-4">
+                        <div className="bg-surface border border-line rounded-xl p-6">
+                            <h2 className="text-base font-bold text-textPrimary mb-4">
+                                Payment summary
+                            </h2>
+
+                            <dl className="space-y-2.5 text-sm">
+                                <div className="flex justify-between gap-3">
+                                    <dt className="text-textSecondary">
+                                        Items ({items.length})
+                                    </dt>
+                                    <dd className="font-medium text-textPrimary tabular">
+                                        {rupiah(itemsTotal)}
+                                    </dd>
+                                </div>
+
+                                {/* One line per shop, so the buyer can see which
+                                    courier choice moved the total. */}
+                                {sellerGroups.map((group) => {
+                                    const rate = rateFor(group.id);
+
+                                    return (
+                                        <div key={group.id} className="flex justify-between gap-3">
+                                            <dt className="text-textSecondary min-w-0">
+                                                <span className="block">Shipping</span>
+                                                {sellerGroups.length > 1 && (
+                                                    <span className="block text-xs text-textMuted truncate">
+                                                        {group.name}
+                                                    </span>
+                                                )}
+                                            </dt>
+                                            <dd className="font-medium text-textPrimary tabular shrink-0">
+                                                {quoting ? (
+                                                    <Loader2 size={14} className="animate-spin text-textMuted" />
+                                                ) : rate ? (
+                                                    rupiah(rate.cost)
+                                                ) : (
+                                                    <span className="text-textMuted">Not set</span>
+                                                )}
+                                            </dd>
+                                        </div>
+                                    );
+                                })}
+                            </dl>
+
+                            <div className="mt-5 pt-5 border-t border-line flex items-end justify-between gap-3">
+                                <span className="text-label uppercase text-textSecondary">Total</span>
+                                <span className="text-2xl font-bold text-primary tabular">
+                                    {rupiah(grandTotal)}
+                                </span>
+                            </div>
+
+                            {errorBox && <div className="mt-4">{errorBox}</div>}
+
+                            <button
+                                onClick={handleSubmit}
+                                disabled={!canSubmit}
+                                className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {submitting || quoting ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <Lock size={16} />
+                                )}
+                                {submitLabel}
+                            </button>
+
+                            {blockedReason && (
+                                <p className="mt-2 text-xs text-center text-textSecondary">
+                                    {blockedReason}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex items-start gap-3 bg-primarySoft rounded-xl p-4">
+                            <ShieldCheck size={18} className="text-primary mt-0.5 shrink-0" />
+                            <p className="text-xs leading-relaxed text-primaryDark">
+                                Your money is held by Rapaku, not sent to the seller. They are
+                                paid only after you confirm the order arrived in good condition.
+                            </p>
+                        </div>
+                    </aside>
                 </div>
             </div>
- 
-            {/* Sticky total */}
-            <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+
+            {/* Sticky total — mobile & tablet only */}
+            <div className="lg:hidden fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-4 py-3 pb-[env(safe-area-inset-bottom)]">
                 <div className="max-w-2xl mx-auto flex items-center gap-4">
                     <div className="min-w-0 shrink-0">
                         {/* Shipping is shown on its own line rather than folded
@@ -624,24 +741,14 @@ export default function Checkout() {
                     </div>
                     <button
                         onClick={handleSubmit}
-                        disabled={
-                            submitting ||
-                            items.length === 0 ||
-                            !addressId ||
-                            quoting ||
-                            !shippingReady
-                        }
+                        disabled={!canSubmit}
                         className="flex-1 rounded-full mb-3 bg-primary py-3 text-sm font-semibold text-white hover:bg-primaryHover transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {submitting
-                            ? "Placing order..."
-                            : quoting
-                                ? "Checking rates..."
-                                : "Place order"}
+                        {submitLabel}
                     </button>
                 </div>
             </div>
- 
+
             {/* Address picker */}
             {pickerOpen && (
                 <Sheet title="Delivery address" onClose={() => setPickerOpen(false)}>
@@ -673,7 +780,7 @@ export default function Checkout() {
                             </button>
                         ))}
                     </div>
- 
+
                     <button
                         onClick={() => {
                             setPickerOpen(false);
@@ -686,7 +793,7 @@ export default function Checkout() {
                     </button>
                 </Sheet>
             )}
- 
+
             {/* Address form */}
             {formOpen && (
                 <Sheet title="New address" onClose={() => setFormOpen(false)}>
@@ -717,12 +824,6 @@ function Sheet({ title, children, onClose }) {
     );
 }
 
-// Replaces the existing AddressForm function at the bottom of
-// src/pages/Checkout.jsx. Everything above it stays as it is.
-//
-// Add to the imports at the top of Checkout.jsx:
-//   import AreaPicker from "../components/AreaPicker";
-
 function AddressForm({ onSaved }) {
     const [form, setForm] = useState({
         label: "",
@@ -749,22 +850,22 @@ function AddressForm({ onSaved }) {
     // fields below fill themselves from it. They stay editable: the official
     // courier spelling and the one people actually use don't always match.
     const pickArea = (area) => {
-    setForm((prev) => ({
-        ...prev,
-        destination_area_id: area.id,
-        destination_area_label: area.label,
-        ...(area.id
-            ? {
-                  district: area.district || prev.district,
-                  city: area.city || prev.city,
-                  province: area.province || prev.province,
-                  postal_code: area.postal_code || prev.postal_code,
-              }
-            : {}),
-    }));
+        setForm((prev) => ({
+            ...prev,
+            destination_area_id: area.id,
+            destination_area_label: area.label,
+            ...(area.id
+                ? {
+                      district: area.district || prev.district,
+                      city: area.city || prev.city,
+                      province: area.province || prev.province,
+                      postal_code: area.postal_code || prev.postal_code,
+                  }
+                : {}),
+        }));
 
-    setErrors((prev) => ({ ...prev, destination_area_id: "" }));
-};
+        setErrors((prev) => ({ ...prev, destination_area_id: "" }));
+    };
 
     const save = async (e) => {
         e.preventDefault();
